@@ -1,7 +1,7 @@
 RGP-Chord
 =========
 
-C++ Chord - Peer-to-Peer Distributed Hash Table - Library
+Chord Library - Peer-to-Peer Distributed Hash Table
 
 LICENSE
 =======
