@@ -2,6 +2,8 @@ RGP-Chord
 =========
 Chord Library - Peer-to-Peer Distributed Hash Table
 
+The project is in early stages and not yet ready for usage.
+
 Installation
 =======
 #### Dependencies ####
