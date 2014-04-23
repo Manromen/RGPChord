@@ -1,7 +1,23 @@
 RGP-Chord
 =========
-
 Chord Library - Peer-to-Peer Distributed Hash Table
+
+Installation
+=======
+#### Dependencies ####
+Please install the following dependencies before using CMake:
+* RGP-Log: https://github.com/Manromen/rgp-log
+
+#### CMake ####
+There is a provided CMake configure file.  
+On Unix you can use the following example commands (from within the project folder):  
+```
+mkdir build
+cd build
+cmake -i ..
+make
+sudo make install
+```
 
 LICENSE
 =======
