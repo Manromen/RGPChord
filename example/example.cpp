@@ -1,5 +1,5 @@
 /*
- test.cpp
+ example.cpp
  Chord
 
  Created by Ralph-Gordon Paul on 13.06.13.
@@ -30,8 +30,8 @@
 */
 
 #include <iostream>
-#include "Chord.h"
-#include "RGP-Log.h"
+#include <rgp/Chord.h>
+#include <rgp/Log.h>
 
 #include <sstream>
 #include <arpa/inet.h>

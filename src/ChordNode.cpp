@@ -29,9 +29,9 @@
  -------------------------------------------------------------------------------
 */
 
-#include "ChordNode.h"
-#include "Chord.h"
-#include "RGP-Log.h"
+#include <rgp/ChordNode.h>
+#include <rgp/Chord.h>
+#include <rgp/Log.h>
 
 #include <sstream>
 

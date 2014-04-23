@@ -29,7 +29,7 @@
  -------------------------------------------------------------------------------
 */
 
-#include "ChordData.h"
+#include <rgp/ChordData.h>
 
 #include <sstream>
 

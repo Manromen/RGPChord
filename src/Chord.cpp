@@ -29,8 +29,8 @@
  -------------------------------------------------------------------------------
 */
 
-#include "Chord.h"
-#include "RGP-Log.h"
+#include <rgp/Chord.h>
+#include <rgp/Log.h>
 
 // standard c
 #include <unistd.h>
