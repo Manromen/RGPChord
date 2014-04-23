@@ -30,7 +30,7 @@ target_link_libraries(example rgp-chord)
 find_library(rgp-log librgp-log.a)
 
 if(${rgp-log} STREQUAL "rgp-log-NOTFOUND")
-    message(FATAL_ERROR "Couldn't find the 'external_lib' library")
+    message(FATAL_ERROR "Couldn't find the 'external_lib' librgp-log.a")
 endif()
 message(STATUS "Found 'RGP-Log' at: ${rgp-log}")
 
