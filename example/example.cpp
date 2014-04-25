@@ -50,7 +50,7 @@ bool isInteger(std::string);
 // the textual user interface
 void tui(Chord &);
 
-int main(int argc, const char * argv[])
+int main(int argc, const char ** argv)
 {
     // all possible parameters
     std::string ipAddress {""};
@@ -106,7 +106,7 @@ int main(int argc, const char * argv[])
         } else if (parameter == "-v") { // verbose
             
             // set log level
-            Log::sharedLog()->logLevel = 1;
+            Log::sharedLog()->setLoglevel(LoglevelVerbose);
             
         } else if (parameter == "-daemon") {
             
