@@ -71,7 +71,7 @@ ChordNode::~ChordNode()
 void ChordNode::setReceiveSocket(int socket)
 {
     if (receiveSocket != -1) {
-        Log::sharedLog()->error( std::string("warning receivesocket for node: ") += std::to_string(nodeID) += " was already set" );
+        Log::sharedLog()->error(std::string("warning receivesocket for node: ") += std::to_string(nodeID) += " was already set");
     }
     
     // stop request handler if already started
@@ -92,7 +92,7 @@ void ChordNode::setReceiveSocket(int socket)
 
 void ChordNode::handleRequests()
 {
-    Log::sharedLog()->printv( "ChordNode handleRequest" );
+    Log::sharedLog()->printv("ChordNode handleRequest");
     // receive request
     ChordHeader_t requestHeader { {0, 0, 0}, 0, 0 };
     
@@ -104,7 +104,7 @@ void ChordNode::handleRequests()
         // wait for incomming data
         if ((readBytes = recv(this->receiveSocket, &requestHeader, sizeof(ChordHeader_t), 0)) <= 0) {
             if (readBytes == 0) {
-                Log::sharedLog()->printv( "Remote Node closed connection" );
+                Log::sharedLog()->printv("Remote Node closed connection");
                 break;
             }
             Log::sharedLog()->errorWithErrno("ChordNode::handleRequests():recv1: ", errno);
@@ -112,8 +112,8 @@ void ChordNode::handleRequests()
         }
         
         // error check
-        if (readBytes != sizeof(ChordHeader_t) ) {
-            Log::sharedLog()->error( "don't received enough data ... something bad happened" );
+        if (readBytes != sizeof(ChordHeader_t)) {
+            Log::sharedLog()->error("don't received enough data ... something bad happened");
             continue;
         }
         
@@ -128,7 +128,7 @@ void ChordNode::handleRequests()
             readBytes = recv(this->receiveSocket, data, ntohl(requestHeader.dataSize), 0);
             
             if (readBytes == 0) {
-                Log::sharedLog()->printv( "Remote Node closed connection" );
+                Log::sharedLog()->printv("Remote Node closed connection");
                 break;
             }
             
@@ -139,9 +139,9 @@ void ChordNode::handleRequests()
             }
             
             if (readBytes != static_cast<ssize_t>(ntohl(requestHeader.dataSize))) {
-                Log::sharedLog()->error( (std::string("data size: ") += std::to_string(ntohl(requestHeader.dataSize))
-                                               += " readBytes: ") += std::to_string(readBytes) );
-                Log::sharedLog()->error( "recv(): don't received the expected data size" );
+                Log::sharedLog()->error((std::string("data size: ") += std::to_string(ntohl(requestHeader.dataSize))
+                                               += " readBytes: ") += std::to_string(readBytes));
+                Log::sharedLog()->error("recv(): don't received the expected data size");
                 break;
             }
         }
@@ -152,7 +152,7 @@ void ChordNode::handleRequests()
                 
             case ChordMessageTypeHeartbeat:
             {
-                Log::sharedLog()->printv( std::string("received Heartbeat message from: ") += std::to_string(nodeID) );
+                Log::sharedLog()->printv(std::string("received Heartbeat message from: ") += std::to_string(nodeID));
                 // answer with heartbeat reply
                 sendResponse(ChordMessageTypeHeartbeatReply, nullptr, 0);
 
@@ -161,11 +161,11 @@ void ChordNode::handleRequests()
                 
             case ChordMessageTypeSearch:
             {
-                Log::sharedLog()->printv( "received Search message" );
+                Log::sharedLog()->printv("received Search message");
                 
                 // error check
                 if (data == nullptr) {
-                    Log::sharedLog()->error( "received search without data ..." );
+                    Log::sharedLog()->error("received search without data ...");
                     break;
                 }
                 
@@ -180,7 +180,7 @@ void ChordNode::handleRequests()
                     sendResponse(ChordMessageTypeSearchNodeResponse, reinterpret_cast<char *>(&node), sizeof(ChordNode_t));
                     
                 } catch (ChordConnectionException &exception) {
-                    Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                    Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                 }
                 
                 break;
@@ -188,16 +188,16 @@ void ChordNode::handleRequests()
                 
             case ChordMessageTypeUpdatePredecessor:
             {
-                Log::sharedLog()->printv( std::string("received Update Predecessor message from: ") += std::to_string(nodeID) );
+                Log::sharedLog()->printv(std::string("received Update Predecessor message from: ") += std::to_string(nodeID));
                 
                 // Error checking
                 if (data == nullptr) {
-                    Log::sharedLog()->error( "received update predecessor without data ..." );
+                    Log::sharedLog()->error("received update predecessor without data ...");
                     break;
                 }
                 
                 if (ntohl(requestHeader.dataSize) != sizeof(ChordNode_t)) {
-                    Log::sharedLog()->error( "received update predecessor with unexpected data size ..." );
+                    Log::sharedLog()->error("received update predecessor with unexpected data size ...");
                     break;
                 }
                 
@@ -209,7 +209,7 @@ void ChordNode::handleRequests()
                 try {
                     sendResponse(ChordMessageTypePredecessor, reinterpret_cast<char *>(&newPredecessor), sizeof(ChordNode_t));
                 } catch (ChordConnectionException &exception) {
-                    Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                    Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                 }
                 
                 break;
@@ -218,17 +218,17 @@ void ChordNode::handleRequests()
             case ChordMessageTypeDataAdd:
             {
                 // someone wants to add data to us
-                Log::sharedLog()->printv( "received add data message" );
+                Log::sharedLog()->printv("received add data message");
                 
                 // Error checking
                 if (data == nullptr) {
-                    Log::sharedLog()->error( "received add data without data ..." );
+                    Log::sharedLog()->error("received add data without data ...");
                     
                     // send answer
                     try {
                         sendResponse(ChordMessageTypeDataAddFailed, nullptr, 0);
                     } catch (ChordConnectionException &exception) {
-                        Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                        Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                     }
                     
                     break;
@@ -246,7 +246,7 @@ void ChordNode::handleRequests()
                     }
                     
                 } catch (ChordConnectionException &exception) {
-                    Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                    Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                 }
                 
                 break;
@@ -254,10 +254,10 @@ void ChordNode::handleRequests()
                 
             case ChordMessageTypeDataRequest:
             {
-                Log::sharedLog()->printv( "received data request message" );
+                Log::sharedLog()->printv("received data request message");
                 
                 if (data == nullptr) {
-                    Log::sharedLog()->error( "received data request without data ..." );
+                    Log::sharedLog()->error("received data request without data ...");
                     break;
                 }
                 
@@ -279,7 +279,7 @@ void ChordNode::handleRequests()
                         sendResponse(ChordMessageTypeDataAnswer, dataString, dataSize);
                         
                     } catch (ChordConnectionException &exception) {
-                        Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                        Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                     }
                     
                     delete [] dataString;
@@ -290,7 +290,7 @@ void ChordNode::handleRequests()
                         sendResponse(ChordMessageTypeDataNotFound, nullptr, 0);
                         
                     } catch (ChordConnectionException &exception) {
-                        Log::sharedLog()->error( std::string("Error sending response: ") += exception.what() );
+                        Log::sharedLog()->error(std::string("Error sending response: ") += exception.what());
                     }
                 }
                 
@@ -299,7 +299,7 @@ void ChordNode::handleRequests()
                 
             default:
             {
-                Log::sharedLog()->error( std::string("received unknown message type: ") += std::to_string(requestHeader.type) );
+                Log::sharedLog()->error(std::string("received unknown message type: ") += std::to_string(requestHeader.type));
                 break;
             }
         }
@@ -315,7 +315,7 @@ void ChordNode::handleRequests()
         delete [] data; data = nullptr;
     }
     
-    Log::sharedLog()->printv( "close handlingThread" );
+    Log::sharedLog()->printv("close handlingThread");
     
     close(this->receiveSocket);
     this->receiveSocket = -1;
@@ -345,14 +345,14 @@ void ChordNode::sendResponse(ChordMessageType type, char *data, ssize_t dataSize
     
     // send message
     ssize_t bytesSend { 0 };
-    if ( (bytesSend = send(this->receiveSocket, message, sizeof(ChordHeader_t) + dataSize, 0)) <= 0) {
+    if ((bytesSend = send(this->receiveSocket, message, sizeof(ChordHeader_t) + dataSize, 0)) <= 0) {
         
         // memory management
         delete [] message; message = nullptr;
         
         // check if connection was closed
         if (bytesSend == 0) {
-            Log::sharedLog()->error( "Remote Node closed connection" );
+            Log::sharedLog()->error("Remote Node closed connection");
             throw ChordConnectionException { "Remote Node closed connection" };
         }
         
@@ -393,14 +393,14 @@ void ChordNode::sendRequest(ChordMessageType type, char *data, ssize_t dataSize)
     
     // send message
     ssize_t bytesSend { 0 };
-    if ( (bytesSend = send(this->sendSocket, message, sizeof(ChordHeader_t) + dataSize, 0)) <= 0) {
+    if ((bytesSend = send(this->sendSocket, message, sizeof(ChordHeader_t) + dataSize, 0)) <= 0) {
         
         free(message);
         message = NULL;
         
         // check if connection was closed
         if (bytesSend == 0) {
-            Log::sharedLog()->error( "Remote Node closed connection" );
+            Log::sharedLog()->error("Remote Node closed connection");
             close(this->sendSocket);
             this->sendSocket = -1;
             throw ChordConnectionException { "Remote Node closed connection" };
@@ -430,7 +430,7 @@ char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
     if ((readBytes = recv(this->sendSocket, &responseHeader, sizeof(ChordHeader_t), 0)) <= 0) {
         
         if (readBytes == 0) { // connection was closed
-            Log::sharedLog()->error( std::string("Node with id: ") += std::to_string(this->nodeID) += " closed the connection" );
+            Log::sharedLog()->error(std::string("Node with id: ") += std::to_string(this->nodeID) += " closed the connection");
             close(this->sendSocket);
             this->sendSocket = -1;
             throw ChordConnectionException { "Node closed the connection" };
@@ -442,8 +442,8 @@ char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
     }
     
     // error check
-    if (readBytes != sizeof(ChordHeader_t) ) {
-        Log::sharedLog()->error( "don't received enough data ... something bad happened" );
+    if (readBytes != sizeof(ChordHeader_t)) {
+        Log::sharedLog()->error("don't received enough data ... something bad happened");
         throw ChordConnectionException { "don't received enough data ... something bad happened" };
     }
     
@@ -456,7 +456,7 @@ char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
         // receive the data
         if ((readBytes = recv(this->sendSocket, data, *dataSize, 0)) <= 0) {
             if (readBytes == 0) {
-                Log::sharedLog()->error( std::string("Node with id: ") += std::to_string(this->nodeID) += " closed the connection" );
+                Log::sharedLog()->error(std::string("Node with id: ") += std::to_string(this->nodeID) += " closed the connection");
                 close(this->sendSocket);
                 this->sendSocket = -1;
                 throw ChordConnectionException { "Node closed the connection" };
@@ -466,8 +466,8 @@ char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
         }
         
         // error check
-        if (readBytes != *dataSize ) {
-            Log::sharedLog()->error( "don't received enough data ... something bad happened" );
+        if (readBytes != *dataSize) {
+            Log::sharedLog()->error("don't received enough data ... something bad happened");
             throw ChordConnectionException { "don't received enough data ... something bad happened" };
         }
         
@@ -503,7 +503,7 @@ bool ChordNode::isAlive()
             
         } catch (ChordConnectionException &exception) {
             // error
-            Log::sharedLog()->error( std::string("ChordNode::isAlive(): coulnd't send request: ") += exception.what() );
+            Log::sharedLog()->error(std::string("ChordNode::isAlive(): coulnd't send request: ") += exception.what());
             
             close(this->sendSocket);
             this->sendSocket = -1;
@@ -532,7 +532,7 @@ bool ChordNode::isAlive()
                 
             } catch (ChordConnectionException &exception) {
                 // error
-                Log::sharedLog()->error( std::string("ChordNode::isAlive(): coulnd't receive request: ") += exception.what() );
+                Log::sharedLog()->error(std::string("ChordNode::isAlive(): coulnd't receive request: ") += exception.what());
                 
                 close(this->sendSocket);
                 this->sendSocket = -1;
@@ -605,7 +605,7 @@ ChordConnectionStatus ChordNode::establishSendConnection()
         sendRequest(ChordMessageTypeIdentify, NULL, 0);
     } catch (ChordConnectionException &exception) {
         // send failed
-        Log::sharedLog()->error( std::string("ChordNode::establishSendConnection():identify ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::establishSendConnection():identify ") += exception.what());
         close(this->sendSocket);
         this->sendSocket = -1;
         sendSocket_mutex.unlock();
@@ -640,7 +640,7 @@ ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
     try {
         sendRequest(ChordMessageTypeUpdatePredecessor, reinterpret_cast<char *>(&pred), sizeof(ChordNode_t));
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::getPredecessorFromRemoteNode():sendRequest(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::getPredecessorFromRemoteNode():sendRequest(): ") += exception.what());
         sendSocket_mutex.unlock();
         throw ChordConnectionException { "couldn't send request" };
     }
@@ -653,7 +653,7 @@ ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
     try {
         data = recvResponse(&responseType, &dataSize);
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::getPredecessorFromRemoteNode():recvResponse(): ") += exception.what() );;
+        Log::sharedLog()->error(std::string("ChordNode::getPredecessorFromRemoteNode():recvResponse(): ") += exception.what());;
         sendSocket_mutex.unlock();
         throw ChordConnectionException { "couldn't receive response" };
     }
@@ -665,7 +665,7 @@ ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
         ChordNode_t *tempNode { nullptr };
         ChordNode_t receivedNode {0, 0, 0};
         if (data == nullptr) {
-            Log::sharedLog()->error( "responseData == nullptr" );
+            Log::sharedLog()->error("responseData == nullptr");
         } else {
             // copy to temp to be able to free the memory and return copy by reference
             tempNode = reinterpret_cast<ChordNode_t *>(data);
@@ -676,7 +676,7 @@ ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
         return receivedNode;
         
     } else {
-        Log::sharedLog()->error( "answer contains unexpected data size" );
+        Log::sharedLog()->error("answer contains unexpected data size");
         throw ChordConnectionException { "answer contains unexpected data size" };
     }
 }
@@ -691,7 +691,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
     try {
         sendRequest(ChordMessageTypeSearch, reinterpret_cast<char *>(&searchKey), sizeof(DataID_t));
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::searchForKey():sendRequest(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::searchForKey():sendRequest(): ") += exception.what());
     }
     
     // receive result
@@ -702,7 +702,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
     try {
         responseData = recvResponse(&responseType, &responseDataSize);
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::searchForKey():recvResponse(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::searchForKey():recvResponse(): ") += exception.what());
     }
     sendSocket_mutex.unlock();
     
@@ -715,7 +715,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
                 ChordNode_t *tempNode { nullptr };
                 ChordNode_t receivedNode {0, 0, 0};
                 if (responseData == nullptr) {
-                    Log::sharedLog()->error( "responseData == nullptr" );
+                    Log::sharedLog()->error("responseData == nullptr");
                 } else {
                     // copy to temp to be able to free the memory and return copy by reference
                     tempNode = reinterpret_cast<ChordNode_t *>(responseData);
@@ -727,7 +727,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
                 return receivedNode;
                 
             } else {
-                Log::sharedLog()->error( "answer contains unexpected data size" );
+                Log::sharedLog()->error("answer contains unexpected data size");
                 throw ChordConnectionException { "answer contains unexpected data size" };
             }
             break;
@@ -735,7 +735,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
             
         default:
         {
-            Log::sharedLog()->error( std::string("received unexpected answer type: ") += std::to_string(responseType) );
+            Log::sharedLog()->error(std::string("received unexpected answer type: ") += std::to_string(responseType));
             throw ChordConnectionException { "received unexpected answer: " };
             break;
         }
@@ -752,7 +752,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
     try {
         sendRequest(ChordMessageTypeDataRequest, reinterpret_cast<char *>(&dataKey), sizeof(DataID_t));
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::requestDataForKey():sendRequest(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::requestDataForKey():sendRequest(): ") += exception.what());
     }
     
     // receive the data
@@ -763,7 +763,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
     try {
         responseData = recvResponse(&responseType, &responseDataSize);
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::requestDataForKey():recvResponse(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::requestDataForKey():recvResponse(): ") += exception.what());
     }
     sendSocket_mutex.unlock();
     
@@ -774,7 +774,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
             if (responseDataSize > 0) {
                 
                 if (responseData == nullptr) {
-                    Log::sharedLog()->error( "ChordNode::requestDataForKey(): responseData == nullptr" );
+                    Log::sharedLog()->error("ChordNode::requestDataForKey(): responseData == nullptr");
                 } else {
                     // create ChordData and return it
                     std::string dataString { responseData };
@@ -788,7 +788,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
                 }
                 
             } else {
-                Log::sharedLog()->error( "answer contains no data" );
+                Log::sharedLog()->error("answer contains no data");
                 throw ChordConnectionException { "answer contains no data" };
             }
             break;
@@ -801,7 +801,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
                 delete [] responseData; responseData = nullptr;
             }
             
-            Log::sharedLog()->error( "ChordNode::requestDataForKey(): received data not found from remote node" );
+            Log::sharedLog()->error("ChordNode::requestDataForKey(): received data not found from remote node");
             break;
         }
             
@@ -812,7 +812,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
                 delete [] responseData; responseData = nullptr;
             }
             
-            Log::sharedLog()->error( std::string("received unexpected answer type: ") += std::to_string(responseType) );
+            Log::sharedLog()->error(std::string("received unexpected answer type: ") += std::to_string(responseType));
             throw ChordConnectionException { "received unexpected answer: " };
             break;
         }
@@ -841,9 +841,9 @@ bool ChordNode::addData(std::string *data)
     
     // send the data
     try {
-        sendRequest( ChordMessageTypeDataAdd, dataString, dataSize );
+        sendRequest(ChordMessageTypeDataAdd, dataString, dataSize);
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::addData():sendRequest(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::addData():sendRequest(): ") += exception.what());
     }
     
     delete [] dataString;
@@ -856,7 +856,7 @@ bool ChordNode::addData(std::string *data)
     try {
         responseData = recvResponse(&responseType, &responseDataSize);
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("ChordNode::addData():recvResponse(): ") += exception.what() );
+        Log::sharedLog()->error(std::string("ChordNode::addData():recvResponse(): ") += exception.what());
     }
     
     // we are done with the send socket

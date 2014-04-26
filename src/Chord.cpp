@@ -121,7 +121,7 @@ void Chord::initOwnNode(std::string ipAddress, uint16_t port)
     // choose node id for ourself
     std::srand(static_cast<unsigned int>(tv.tv_usec)); //use current time as seed for random generator
     NodeID_t nodeID { static_cast<NodeID_t>(std::rand() % highestID()) };
-    Log::sharedLog()->printv(std::string("We are Node with ID: ") += std::to_string(nodeID));
+    RGPLOGV(std::string("We are Node with ID: ") += std::to_string(nodeID));
     
     this->ownNode = new ChordNode { nodeID, ipAddress, port, this};
 }
@@ -152,12 +152,12 @@ void Chord::waitForIncommingConnections()
         struct sockaddr_in data;
 		unsigned int size = sizeof(struct sockaddr_in);
         
-        Log::sharedLog()->printv("Chord::waitForIncommingConnections(): waiting for incomming connection");
+        RGPLOGV("Chord::waitForIncommingConnections(): waiting for incomming connection");
         
         // wait for incomming connection
         client_socket = accept(server_socket, (struct sockaddr *)&data, &size);
         
-        Log::sharedLog()->printv("Chord::waitForIncommingConnections(): client connected ...");
+        RGPLOGV("Chord::waitForIncommingConnections(): client connected ...");
         
         if (client_socket > 0) { // < 0 ==> Error
             
@@ -167,7 +167,7 @@ void Chord::waitForIncommingConnections()
             // wait for incomming data
             if ((readBytes = recv(client_socket, &requestHeader, sizeof(ChordHeader_t), 0)) <= 0) {
                 if (readBytes == 0) {
-                    Log::sharedLog()->printv("Chord::waitForIncommingConnections(): Remote Node closed connection");
+                    RGPLOGV("Chord::waitForIncommingConnections(): Remote Node closed connection");
                     continue;
                 }
                 Log::sharedLog()->errorWithErrno("Chord::waitForIncommingConnections():recv() ", errno);
@@ -175,8 +175,8 @@ void Chord::waitForIncommingConnections()
             }
             
             // error check
-            if (readBytes != sizeof(ChordHeader_t) ) {
-                Log::sharedLog()->error( "Chord::waitForIncommingConnections(): don't received enough data ... something bad happened" );
+            if (readBytes != sizeof(ChordHeader_t)) {
+                Log::sharedLog()->error("Chord::waitForIncommingConnections(): don't received enough data ... something bad happened");
                 continue;
             }
             
@@ -191,7 +191,7 @@ void Chord::waitForIncommingConnections()
             switch (requestHeader.type) {
                 case ChordMessageTypeIdentify:
                 {
-                    Log::sharedLog()->printv("received Identify message");
+                    RGPLOGV("received Identify message");
                     
                     // set values from header
                     nodeID = ntohs(requestHeader.node.nodeID);
@@ -203,10 +203,10 @@ void Chord::waitForIncommingConnections()
                     
                     // don't found node with given id
                     if (node == nullptr) {
-                        Log::sharedLog()->printv("Chord::waitForIncommingConnections(): node don't exists - creating");
+                        RGPLOGV("Chord::waitForIncommingConnections(): node don't exists - creating");
                         
                         // create new chord node and append to existing list
-                        ChordNode *newChordNode { new ChordNode ( nodeID, ipAddress, port, this ) };
+                        ChordNode *newChordNode { new ChordNode (nodeID, ipAddress, port, this) };
                         newChordNode->setReceiveSocket(client_socket);
                         
                         connectedNodes_mutex.lock();
@@ -214,7 +214,7 @@ void Chord::waitForIncommingConnections()
                         connectedNodes_mutex.unlock();
                     
                     } else {
-                        Log::sharedLog()->printv("Chord::waitForIncommingConnections(): already exists - setting receive socket");
+                        RGPLOGV("Chord::waitForIncommingConnections(): already exists - setting receive socket");
                         // start receiving messages
                         node->setReceiveSocket(client_socket);
                     }
@@ -224,7 +224,7 @@ void Chord::waitForIncommingConnections()
                     
                 default:
                 {
-                    Log::sharedLog()->printv("Chord::waitForIncommingConnections(): node don't identified - close connection");
+                    RGPLOGV("Chord::waitForIncommingConnections(): node don't identified - close connection");
                     close(client_socket);
                     client_socket = 0;
                     break;
@@ -248,8 +248,8 @@ void Chord::joinDHT(std::string c_ipAddress, uint16_t c_port)
     
     // check if connection could be established
     if (joinStatus == ChordConnectionStatusConnectingFailed) {
-        Log::sharedLog()->error( (std::string("failed to join dht while connecting to: ") += c_ipAddress
-                                       += " on port: ") += std::to_string(c_port) );
+        Log::sharedLog()->error((std::string("failed to join dht while connecting to: ") += c_ipAddress
+                                       += " on port: ") += std::to_string(c_port));
         exit(EXIT_FAILURE); // we cannot join --> terminate app
     }
     
@@ -257,8 +257,8 @@ void Chord::joinDHT(std::string c_ipAddress, uint16_t c_port)
     try {
         successorNode = joinNode->searchForKey(ownNode->getNodeID()); // search our id
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( ((std::string("failed to join dht while searching for key: ") += std::to_string(ownNode->getNodeID()))
-                                       += " with error: ") += exception.what() );
+        Log::sharedLog()->error(((std::string("failed to join dht while searching for key: ") += std::to_string(ownNode->getNodeID()))
+                                       += " with error: ") += exception.what());
         exit(EXIT_FAILURE); // we cannot join --> terminate app
     }
     
@@ -273,7 +273,7 @@ void Chord::joinDHT(std::string c_ipAddress, uint16_t c_port)
     connectedNodes.push_back(this->successor);
     connectedNodes_mutex.unlock();
     
-    Log::sharedLog()->printv( std::string("received successor node: ") += this->successor->description());
+    RGPLOGV(std::string("received successor node: ") += this->successor->description());
     
     // we shouldn't be responsible for all that, but we may receive keys from our successor,
     // so don't throw them back to successor
@@ -336,7 +336,7 @@ inline void Chord::setPredecessor(ChordNode_t node)
     for (auto data : dataToTransfer) {
         std::string dataString { data->getData() };
         
-        Log::sharedLog()->printv( "Chord::setPredecessor(): transfer data to predecessor" );
+        RGPLOGV("Chord::setPredecessor(): transfer data to predecessor");
         predecessor->establishSendConnection();
         predecessor->addData(&dataString);
         
@@ -350,13 +350,13 @@ inline void Chord::setPredecessor(ChordNode_t node)
 void Chord::stabilize()
 {
     const int kStandardDelaySeconds { 10 };
-    std::chrono::seconds delay_time( 1 ); // first stablize will connect to dht - so do it quick
+    std::chrono::seconds delay_time(1); // first stablize will connect to dht - so do it quick
     
     while (!stopStabilizeThread) {
         
-        std::this_thread::sleep_for( delay_time );
-        delay_time = std::chrono::seconds ( kStandardDelaySeconds ); // reset back to standard
-        Log::sharedLog()->printv("stabilize ...");
+        std::this_thread::sleep_for(delay_time);
+        delay_time = std::chrono::seconds (kStandardDelaySeconds); // reset back to standard
+        RGPLOGV("stabilize ...");
         
         if (successor == nullptr) {
             if (predecessor != nullptr) {
@@ -372,7 +372,7 @@ void Chord::stabilize()
             try {
                 ChordNode_t pred = successor->getPredecessorFromRemoteNode(ownNode);
                 
-                Log::sharedLog()->printv( ((std::string("stabilize (") += std::to_string(ownNode->getNodeID())
+                RGPLOGV(((std::string("stabilize (") += std::to_string(ownNode->getNodeID())
                                               += ")... my successors(") += std::to_string(successor->getNodeID()) += ") predecessor: ")
                                               += std::to_string(ntohs(pred.nodeID)));
                 
@@ -385,11 +385,11 @@ void Chord::stabilize()
                     ChordNode *newSucc { nullptr };
                     newSucc = findNodeWithID(ntohs(pred.nodeID)); // check if we have already a connection to the new successor
                     if (newSucc != nullptr) {
-                        Log::sharedLog()->printv( "stabilize newSucc ..." );
+                        RGPLOGV("stabilize newSucc ...");
                         successor = newSucc;
                         successor->establishSendConnection();
                     } else {
-                        Log::sharedLog()->printv( "stabilize create new node ..." );
+                        RGPLOGV("stabilize create new node ...");
                         
                         // create node for successor
                         struct in_addr predIP;
@@ -402,21 +402,21 @@ void Chord::stabilize()
                         connectedNodes_mutex.unlock();
                         
                         successor->establishSendConnection();
-                        delay_time = std::chrono::seconds ( 1 ); // don't wait so long with next poll
+                        delay_time = std::chrono::seconds (1); // don't wait so long with next poll
                         continue;
                     }
                 }
                 
             } catch (ChordConnectionException &exception) {
-                Log::sharedLog()->error( "Chord::stabilize(): error communicating with successor" );
+                Log::sharedLog()->error("Chord::stabilize(): error communicating with successor");
                 
                 // try to connect again
                 ChordConnectionStatus succStatus = successor->establishSendConnection();
                 
                 // successor is dead -> set successor to nullptr
                 if (succStatus == ChordConnectionStatusConnectingFailed) {
-                    Log::sharedLog()->error( "Chord::stabilize(): error can't establish connection to successor " \
-                                                 "--> setting successor to nullptr" );
+                    Log::sharedLog()->error("Chord::stabilize(): error can't establish connection to successor " \
+                                            "--> setting successor to nullptr");
                     successor = nullptr;
                 }
             }
@@ -426,7 +426,7 @@ void Chord::stabilize()
         if (predecessor != nullptr) {
             if (!predecessor->isAlive()) {
                 
-                Log::sharedLog()->printv( "Chord::stabilize(): my predecessor died..." );
+                RGPLOGV("Chord::stabilize(): my predecessor died...");
                 
                 // predecessor died -> remove from connected list
                 connectedNodes_mutex.lock();
@@ -516,7 +516,7 @@ bool Chord::keyIsInMyRange(DataID_t key) const
     // special case
     if (responsibilityRange.getFrom() >= responsibilityRange.getTo()) {
         
-        if ( key >= responsibilityRange.getFrom() || key <= responsibilityRange.getTo() ) {
+        if (key >= responsibilityRange.getFrom() || key <= responsibilityRange.getTo()) {
             return true;
         }
         
@@ -533,7 +533,7 @@ bool Chord::keyIsInMyRange(DataID_t key) const
 
 ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
 {
-    Log::sharedLog()->printv( std::string("search for key: ") += std::to_string(key) );
+    RGPLOGV(std::string("search for key: ") += std::to_string(key));
     ChordNode_t responsibleNode { 0, 0, 0};
     
     // return ownNode if i'm responsible
@@ -543,7 +543,7 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
         responsibleNode.ip = htonl(inet_addr(ownNode->getIPAddress().c_str()));
         responsibleNode.port = htons(ownNode->getPort());
         
-        Log::sharedLog()->printv( std::string("return responsible node: ") += std::to_string(ownNode->getNodeID()) );
+        RGPLOGV(std::string("return responsible node: ") += std::to_string(ownNode->getNodeID()));
         return responsibleNode;
     }
     
@@ -555,11 +555,11 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
         // don't send search back to where it came from
         if (searchingNode != predecessor && predecessor != nullptr) {
             
-            // check if searching node may don't know the existence of my predecessor ( and possibly skipped the node )
+            // check if searching node may don't know the existence of my predecessor (and possibly skipped the node)
             if (searchingNode->getNodeID() < key && predecessor->getNodeID() > key) {
                 
                 // search with predecessor
-                Log::sharedLog()->printv( std::string("i'm not responsible - passthrough search (predecessor): ") += std::to_string(predecessor->getNodeID()) );
+                RGPLOGV(std::string("i'm not responsible - passthrough search (predecessor): ") += std::to_string(predecessor->getNodeID()));
                 predecessor->establishSendConnection();
                 responsibleNode = predecessor->searchForKey(key);
                 
@@ -573,7 +573,7 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
             // don't send search back to where it came from
             if (searchingNode != successor && successor != nullptr) {
                 
-                Log::sharedLog()->printv( std::string("i'm not responsible - passthrough search (successor): ") += std::to_string(successor->getNodeID()) );
+                RGPLOGV(std::string("i'm not responsible - passthrough search (successor): ") += std::to_string(successor->getNodeID()));
                 responsibleNode = successor->searchForKey(key);
             } else {
                 
@@ -586,7 +586,7 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
         }
         
     } catch (ChordConnectionException &exception) {
-        Log::sharedLog()->error( std::string("Chord::searchForKey: ") += exception.what() );
+        Log::sharedLog()->error(std::string("Chord::searchForKey: ") += exception.what());
         // TODO: what to do if we can't receive the responsible node ?
         // if we can't find a responsible node return self -> what to do now ?
         responsibleNode.nodeID = htons(ownNode->getNodeID());
@@ -594,7 +594,7 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
         responsibleNode.port = htons(ownNode->getPort());
     }
     
-    Log::sharedLog()->printv( (std::string("search result for key (") += std::to_string(key) += ") ") += std::to_string(ntohs(responsibleNode.nodeID)) );
+    RGPLOGV((std::string("search result for key (") += std::to_string(key) += ") ") += std::to_string(ntohs(responsibleNode.nodeID)));
     
     return responsibleNode;
 }
@@ -680,7 +680,7 @@ bool Chord::addDataToHashMap(std::string data)
     // create hash
     int dataHash = std::hash<std::string>()(data) % highestID();
     
-    Log::sharedLog()->printv( (std::string("Chord::addDataToHashMap(): ") += std::to_string(dataHash) += " data: ") += data );
+    RGPLOGV((std::string("Chord::addDataToHashMap(): ") += std::to_string(dataHash) += " data: ") += data);
     
 //    if (keyIsInMyRange(dataHash)) {
         // add data to dataMap
@@ -734,8 +734,8 @@ void Chord::addData(std::string data)
         dataMap[dataHash] = new ChordData (dataHash, data); // hint: if there was already a value it will be replaced --> memory leak
         dataMap_mutex.unlock();
         
-        Log::sharedLog()->print( std::string("hash: ") += std::to_string(dataHash) );
-        Log::sharedLog()->print( std::string("node: ") += ownNode->description() );
+        RGPLOG(std::string("hash: ") += std::to_string(dataHash));
+        RGPLOG(std::string("node: ") += ownNode->description());
         
     } else {
         
@@ -744,7 +744,7 @@ void Chord::addData(std::string data)
         
         if (responsibleNode.port == 0) { // port == 0 indicates that we don't found a responsible node
             
-            Log::sharedLog()->print("couldn't add data: don't found responsible node");
+            RGPLOG("couldn't add data: don't found responsible node");
             
         } else {
             
@@ -759,7 +759,7 @@ void Chord::addData(std::string data)
                 struct in_addr ip { 0 };
                 ip.s_addr = ntohl(responsibleNode.ip);
                 
-                node = new ChordNode ( ntohs(responsibleNode.nodeID), inet_ntoa(ip), ntohs(responsibleNode.port), this );
+                node = new ChordNode (ntohs(responsibleNode.nodeID), inet_ntoa(ip), ntohs(responsibleNode.port), this);
                 
                 // add node to list
                 connectedNodes.push_back(node);
@@ -773,11 +773,11 @@ void Chord::addData(std::string data)
             
             if (success) {
                 
-                Log::sharedLog()->print( std::string("hash: ") += std::to_string(dataHash) );
-                Log::sharedLog()->print( std::string("node: ") += node->description() );
+                RGPLOG(std::string("hash: ") += std::to_string(dataHash));
+                RGPLOG(std::string("node: ") += node->description());
                 
             } else {
-                Log::sharedLog()->print( (std::string("failed to add data to node: ") += std::to_string(node->getNodeID()) += " with data id: ") += std::to_string(dataHash));
+                RGPLOG((std::string("failed to add data to node: ") += std::to_string(node->getNodeID()) += " with data id: ") += std::to_string(dataHash));
             }
             
             if (node != successor && node != predecessor) { // if we have a finger table -> don't disconnect from finger table nodes too
@@ -794,7 +794,7 @@ void Chord::printDataWithHash(DataID_t hash)
     
     // error check
     if (node.port == 0) {
-        Log::sharedLog()->print( std::string("couldn't find responsible node for key: ") += std::to_string(hash) );
+        RGPLOG(std::string("couldn't find responsible node for key: ") += std::to_string(hash));
         return;
     }
     
@@ -808,7 +808,7 @@ void Chord::printDataWithHash(DataID_t hash)
         struct in_addr ip { 0 };
         ip.s_addr = ntohl(node.ip);
         
-        responsibleNode = new ChordNode ( ntohs(node.nodeID), inet_ntoa(ip), ntohs(node.port), this );
+        responsibleNode = new ChordNode (ntohs(node.nodeID), inet_ntoa(ip), ntohs(node.port), this);
         
         // add node to list
         connectedNodes.push_back(responsibleNode);
@@ -828,13 +828,13 @@ void Chord::printDataWithHash(DataID_t hash)
     
     // error check
     if (data == nullptr) {
-        Log::sharedLog()->print( std::string("couldn't find data for key: ") += std::to_string(hash) );
+        RGPLOG(std::string("couldn't find data for key: ") += std::to_string(hash));
         return;
     }
     
     // print the data
-    Log::sharedLog()->print( std::string("value: ") += data->getData() );
-    Log::sharedLog()->print( std::string("node: ") += responsibleNode->description() );
+    RGPLOG(std::string("value: ") += data->getData());
+    RGPLOG(std::string("node: ") += responsibleNode->description());
     
     // memory management
     delete data;
@@ -846,7 +846,7 @@ void Chord::printAllLocalData()
     dataMap_mutex.lock();
     // check if data is empty
     if (dataMap.size() <= 0) {
-        Log::sharedLog()->print( "no local data" );
+        Log::sharedLog()->print("no local data");
         
     } else {
         
@@ -854,7 +854,7 @@ void Chord::printAllLocalData()
         for (auto iterator : dataMap) { // C++11 for each loop
             
             ChordData value = *iterator.second;
-            Log::sharedLog()->print( (std::string() += std::to_string(value.getID()) += " --> ") += value.getData() );
+            Log::sharedLog()->print((std::string() += std::to_string(value.getID()) += " --> ") += value.getData());
         }
     }
     dataMap_mutex.unlock();
@@ -864,30 +864,30 @@ void Chord::printAllLocalData()
 void Chord::printStatus()
 {
     // OwnNode
-    Log::sharedLog()->print( std::string("I'm Node: ") +=  ownNode->description() );
+    Log::sharedLog()->print(std::string("I'm Node: ") +=  ownNode->description());
     
     // Successor
     if (successor != nullptr) {
-        Log::sharedLog()->print( std::string("Successor: ") += successor->description() );
+        Log::sharedLog()->print(std::string("Successor: ") += successor->description());
     } else {
-        Log::sharedLog()->print( "Currently no Successor... " );
+        Log::sharedLog()->print("Currently no Successor... ");
     }
     
     // Predecessor
     if (predecessor != nullptr) {
-        Log::sharedLog()->print( std::string("Predecessor: ") += predecessor->description() );
+        Log::sharedLog()->print(std::string("Predecessor: ") += predecessor->description());
     } else {
-        Log::sharedLog()->print( "Currently no Predecessor... " );
+        Log::sharedLog()->print("Currently no Predecessor... ");
     }
     
     // Responsible range
-    Log::sharedLog()->print( (std::string("My key range: ") += std::to_string(responsibilityRange.getFrom())
-                                   += " - ") += std::to_string(responsibilityRange.getTo()) );
+    Log::sharedLog()->print((std::string("My key range: ") += std::to_string(responsibilityRange.getFrom())
+                                   += " - ") += std::to_string(responsibilityRange.getTo()));
     
     connectedNodes_mutex.lock();
-    Log::sharedLog()->print( "connected nodes:" );
+    Log::sharedLog()->print("connected nodes:");
     for (ChordNode *node : connectedNodes) {
-        Log::sharedLog()->print( node->description() );
+        Log::sharedLog()->print(node->description());
     }
     connectedNodes_mutex.unlock();
 }
