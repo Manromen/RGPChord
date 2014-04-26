@@ -23,7 +23,7 @@ endif()
 
 # enable c++11
 if(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -stdlib=libc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -stdlib=libc++")
 endif()
 # MSVC does not require any special flags for c++11 support
 
@@ -54,8 +54,8 @@ target_link_libraries(rgp-chord rgp-log)
 target_link_libraries(example rgp-log)
 
 # installation 
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/rgp
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/rgp
   DESTINATION include)
 
-INSTALL(TARGETS rgp-chord
+install(TARGETS rgp-chord
   ARCHIVE DESTINATION lib)
