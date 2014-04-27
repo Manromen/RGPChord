@@ -49,7 +49,7 @@ using namespace rgp;
 
 #pragma mark - Constructor / Destructor
 
-Chord::Chord(std::string ipAddress, uint16_t port)
+Chord::Chord (std::string ipAddress, uint16_t port)
 {
     // alloc own node
     initOwnNode(ipAddress, port);
@@ -71,7 +71,7 @@ Chord::Chord(std::string ipAddress, uint16_t port)
     stabilizeThread = std::thread(&Chord::stabilize, this);
 }
 
-Chord::Chord(std::string ipAddress, uint16_t port, std::string c_ipAddress, uint16_t c_port)
+Chord::Chord (std::string ipAddress, uint16_t port, std::string c_ipAddress, uint16_t c_port)
 {
     // alloc own node
     initOwnNode(ipAddress, port);
@@ -92,7 +92,7 @@ Chord::Chord(std::string ipAddress, uint16_t port, std::string c_ipAddress, uint
 //    }
 }
 
-Chord::~Chord()
+Chord::~Chord ()
 {
     // close connectThread
     this->stopConnectThread = true;
@@ -114,7 +114,7 @@ Chord::~Chord()
 
 #pragma mark - Private
 
-void Chord::initOwnNode(std::string ipAddress, uint16_t port)
+void Chord::initOwnNode (std::string ipAddress, uint16_t port)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -126,7 +126,7 @@ void Chord::initOwnNode(std::string ipAddress, uint16_t port)
     this->ownNode = new ChordNode { nodeID, ipAddress, port, this};
 }
 
-void Chord::waitForIncommingConnections()
+void Chord::waitForIncommingConnections ()
 {
     int listening_port = this->ownNode->getPort();
     
@@ -238,7 +238,7 @@ void Chord::waitForIncommingConnections()
 }
 
 // join existing DHT using given ip and port
-void Chord::joinDHT(std::string c_ipAddress, uint16_t c_port)
+void Chord::joinDHT (std::string c_ipAddress, uint16_t c_port)
 {
     // we can use NodeID = 0
     // 1. we don't know the id
@@ -286,7 +286,7 @@ void Chord::joinDHT(std::string c_ipAddress, uint16_t c_port)
 }
 
 // sets the given node as predecessor
-inline void Chord::setPredecessor(ChordNode_t node)
+inline void Chord::setPredecessor (ChordNode_t node)
 {
     // search for ChordNode and apply to predecessor
     predecessor = findNodeWithID(ntohs(node.nodeID));
@@ -347,7 +347,7 @@ inline void Chord::setPredecessor(ChordNode_t node)
 
 #pragma mark -
 
-void Chord::stabilize()
+void Chord::stabilize ()
 {
     const int kStandardDelaySeconds { 10 };
     std::chrono::seconds delay_time(1); // first stablize will connect to dht - so do it quick
@@ -462,7 +462,7 @@ void Chord::stabilize()
 }
 
 // TODO: implement fix_fingers
-void Chord::fix_fingers()
+void Chord::fix_fingers ()
 {
     /*
      Jeder Knoten Kn führt periodisch eine fix_fingers() Funktion aus:
@@ -476,7 +476,7 @@ void Chord::fix_fingers()
 #pragma mark - Public: Called by Chord, ChordNode and Main
 
 // helper for daemon process - main thread will block here
-void Chord::join()
+void Chord::join ()
 {
     try {
         connectThread.join();
@@ -486,7 +486,7 @@ void Chord::join()
 // creates a chord header with the well known data and the given type
 // if there needs to be data appended - this need to be added later
 // the returned value needs to be deleted
-ChordHeader_t *Chord::createChordHeader(ChordMessageType type)
+ChordHeader_t *Chord::createChordHeader (ChordMessageType type)
 {
     // create header
     ChordHeader_t *header = new ChordHeader_t;
@@ -505,13 +505,13 @@ ChordHeader_t *Chord::createChordHeader(ChordMessageType type)
 }
 
 // highest possible hash id
-int Chord::highestID() const
+int Chord::highestID () const
 {
     return static_cast<int>(std::pow(2, kKeyLenght) -1);
 }
 
 // check if i'm responsible for the given key
-bool Chord::keyIsInMyRange(DataID_t key) const
+bool Chord::keyIsInMyRange (DataID_t key) const
 {
     // special case
     if (responsibilityRange.getFrom() >= responsibilityRange.getTo()) {
@@ -531,7 +531,7 @@ bool Chord::keyIsInMyRange(DataID_t key) const
     return false;
 }
 
-ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
+ChordNode_t Chord::searchForKey (ChordNode *searchingNode, DataID_t key) const
 {
     RGPLOGV(std::string("search for key: ") += std::to_string(key));
     ChordNode_t responsibleNode { 0, 0, 0};
@@ -601,7 +601,7 @@ ChordNode_t Chord::searchForKey(ChordNode *searchingNode, DataID_t key) const
 
 // update predecessor if needed
 // returns new predecessor
-ChordNode_t Chord::updatePredecessor(ChordNode_t node)
+ChordNode_t Chord::updatePredecessor (ChordNode_t node)
 {
     // if there is currently no predecessor
     // just accept
@@ -635,7 +635,7 @@ ChordNode_t Chord::updatePredecessor(ChordNode_t node)
 
 // searches all data from chord for given node id
 // returns nullptr if not found
-ChordNode *Chord::findNodeWithID(NodeID_t nodeID)
+ChordNode *Chord::findNodeWithID (NodeID_t nodeID)
 {
     // check if node is ownNode
     if (ownNode->getNodeID() == nodeID) {
@@ -675,7 +675,7 @@ ChordNode *Chord::findNodeWithID(NodeID_t nodeID)
 // adds data from remote node to local data map - if we are responsible
 // returns true on success
 // returns false if we aren't responsible
-bool Chord::addDataToHashMap(std::string data)
+bool Chord::addDataToHashMap (std::string data)
 {
     // create hash
     int dataHash = std::hash<std::string>()(data) % highestID();
@@ -696,7 +696,7 @@ bool Chord::addDataToHashMap(std::string data)
 
 // searches local data for data id and returns the data
 // returns nullptr if there is no data with that key
-ChordData *Chord::getDataWithKey(DataID_t dataID)
+ChordData *Chord::getDataWithKey (DataID_t dataID)
 {
     dataMap_mutex.lock();
     
@@ -721,7 +721,7 @@ ChordData *Chord::getDataWithKey(DataID_t dataID)
 #pragma mark - Public: Called by User
 
 // PUT command
-void Chord::addData(std::string data)
+void Chord::addData (std::string data)
 {
     // create hash
     int dataHash = std::hash<std::string>()(data) % highestID();
@@ -788,7 +788,7 @@ void Chord::addData(std::string data)
 }
 
 // GET command
-void Chord::printDataWithHash(DataID_t hash)
+void Chord::printDataWithHash (DataID_t hash)
 {
     ChordNode_t node = searchForKey(ownNode, hash);
     
@@ -841,7 +841,7 @@ void Chord::printDataWithHash(DataID_t hash)
 }
 
 // LIST command
-void Chord::printAllLocalData()
+void Chord::printAllLocalData ()
 {
     dataMap_mutex.lock();
     // check if data is empty
@@ -861,7 +861,7 @@ void Chord::printAllLocalData()
 }
 
 // prints some status data (successor, predecessor, ...)
-void Chord::printStatus()
+void Chord::printStatus ()
 {
     // OwnNode
     Log::sharedLog()->print(std::string("I'm Node: ") +=  ownNode->description());

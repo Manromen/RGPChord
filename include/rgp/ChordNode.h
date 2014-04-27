@@ -51,8 +51,8 @@ namespace rgp {
         std::string reason;
         
     public:
-        ChordConnectionException(std::string reason) : reason(reason) {}
-        std::string what() { return reason; }
+        ChordConnectionException (std::string reason) : reason(reason) {}
+        std::string what () { return reason; }
     };
     
     // type of node id (typedef to be able to update the size) (if updating, use -> 1, 2 or 4 byte)
@@ -127,20 +127,20 @@ namespace rgp {
         Chord *chord { nullptr }; // associated Chord
         
     private:
-        void handleRequests(); // handle incomming data (heartbeat, search, ...)
+        void handleRequests (); // handle incomming data (heartbeat, search, ...)
         
         // sends response to remote node
         // throws ChordConnectionException on error
-        void sendResponse(ChordMessageType type, char *data, ssize_t dataSize);
+        void sendResponse (ChordMessageType type, char *data, ssize_t dataSize);
         
         // sends request to remote node
         // throws ChordConnectionException on error
-        void sendRequest(ChordMessageType type, char *data, ssize_t dataSize);
+        void sendRequest (ChordMessageType type, char *data, ssize_t dataSize);
         
         // receives response from remote node
         // returns pointer to reveived data or nullptr if there was no received data
         // throws ChordConnectionException on error
-        char *recvResponse(ChordMessageType *type, ssize_t *dataSize);
+        char *recvResponse (ChordMessageType *type, ssize_t *dataSize);
         
     public:
         // Constructor
@@ -149,46 +149,46 @@ namespace rgp {
         ~ChordNode ();
         
         // getter
-        NodeID_t getNodeID() const { return this->nodeID; }
-        std::string getIPAddress() const { return this->ipAddress; }
-        int getPort() const { return this->port; }
-        int getReceiveSocket() const { return this->receiveSocket; }
-        int getSendSocket() const { return this->sendSocket; }
+        NodeID_t getNodeID () const { return this->nodeID; }
+        std::string getIPAddress () const { return this->ipAddress; }
+        int getPort () const { return this->port; }
+        int getReceiveSocket () const { return this->receiveSocket; }
+        int getSendSocket () const { return this->sendSocket; }
         
         // setter
-        void setSendSocket(int socket) { this->sendSocket = socket; }
-        void setReceiveSocket(int socket); // sets new receive socket and starts listening thread
+        void setSendSocket (int socket) { this->sendSocket = socket; }
+        void setReceiveSocket (int socket); // sets new receive socket and starts listening thread
         
-        ChordNode_t chordNode_t() const;                    // returns this node as struct ChordNode_t
+        ChordNode_t chordNode_t () const;                    // returns this node as struct ChordNode_t
         
-        bool isAlive();                                     // checks if connection is open
-        ChordConnectionStatus establishSendConnection();    // establish a connection to remote node (if not already connected)
+        bool isAlive ();                                     // checks if connection is open
+        ChordConnectionStatus establishSendConnection ();    // establish a connection to remote node (if not already connected)
         
         // send connection can be close
         // (f.e. we have a new successor and don't need to keep the connection alive anymore)
-        void closeSendConnection();
+        void closeSendConnection ();
         
         // tell's remote node that i'm his predecessor
         // this method is used by stablilization
         // returns node that the remote node returns
         // throws ChordConnectionException on error
-        ChordNode_t getPredecessorFromRemoteNode(ChordNode *ownNode);
+        ChordNode_t getPredecessorFromRemoteNode (ChordNode *ownNode);
         
         // search for a key (or a node)
         // throws ChordConnectionException on error
-        ChordNode_t searchForKey(DataID_t key);
+        ChordNode_t searchForKey (DataID_t key);
         
         // receive data for key
         // returns nullptr if data not found
         // throws ChordConnectionException on error
-        ChordData *requestDataForKey(DataID_t key);
+        ChordData *requestDataForKey (DataID_t key);
         
         // sends the data to the remote node to add it there locally
         // returns true on success
-        bool addData(std::string *data);
+        bool addData (std::string *data);
         
         // returns a describing string of the instance (node id, ip, ...)
-        std::string description() const;
+        std::string description () const;
     };
 }
 

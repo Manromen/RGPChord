@@ -39,18 +39,18 @@
 using namespace rgp;
 
 // prints the usage information (like --help)
-void printUsage(const char *);
+void printUsage (const char *);
 
 // checks if the given string is an ip-address string
-bool isIPString(std::string);
+bool isIPString (std::string);
 
 // check if a string is an integer (used to check if port is an integer)
-bool isInteger(std::string);
+bool isInteger (std::string);
 
 // the textual user interface
-void tui(Chord &);
+void tui (Chord &);
 
-int main(int argc, const char ** argv)
+int main (int argc, const char **argv)
 {
     // all possible parameters
     std::string ipAddress {""};
@@ -186,7 +186,7 @@ int main(int argc, const char ** argv)
 }
 
 // check if given string is correct ipv4 address format
-bool isIPString(std::string ip)
+bool isIPString (std::string ip)
 {
     struct in_addr pin;
     int result = inet_aton(ip.c_str(), &pin);
@@ -199,7 +199,7 @@ bool isIPString(std::string ip)
 }
 
 // check if a string is an integer
-bool isInteger(std::string number)
+bool isInteger (std::string number)
 {
     // check for integer with converting the string to int
     try {
@@ -213,7 +213,7 @@ bool isInteger(std::string number)
 }
 
 // print usage information to the output (if usage was wrong)
-void printUsage(const char *programName)
+void printUsage (const char *programName)
 {
     std::stringstream output { "Usage: " };
     output << programName
@@ -243,7 +243,7 @@ void printUsage(const char *programName)
  Ausgabe:       values          Die Daten.
 */
 
-void tui(Chord &chord)
+void tui (Chord &chord)
 {
     std::string command { "" };
     

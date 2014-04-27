@@ -35,13 +35,13 @@
 
 using namespace rgp;
 
-ChordData::ChordData(DataID_t dataID, std::string data)
+ChordData::ChordData (DataID_t dataID, std::string data)
 : dataID(dataID), data(data)
 {
 }
 
 // returns a describing string of the data
-std::string ChordData::description() const
+std::string ChordData::description () const
 {
     std::stringstream description;
     

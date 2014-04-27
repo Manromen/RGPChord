@@ -50,7 +50,7 @@ ChordNode::ChordNode (uint16_t id, std::string ip, uint16_t port, Chord *chord)
 {
 }
 
-ChordNode::~ChordNode()
+ChordNode::~ChordNode ()
 {
     // stop request handler
     stopRequestHandlerThread = true;
@@ -68,7 +68,7 @@ ChordNode::~ChordNode()
 
 #pragma mark - Private
 
-void ChordNode::setReceiveSocket(int socket)
+void ChordNode::setReceiveSocket (int socket)
 {
     if (receiveSocket != -1) {
         Log::sharedLog()->error(std::string("warning receivesocket for node: ") += std::to_string(nodeID) += " was already set");
@@ -90,7 +90,7 @@ void ChordNode::setReceiveSocket(int socket)
     }
 }
 
-void ChordNode::handleRequests()
+void ChordNode::handleRequests ()
 {
     Log::sharedLog()->printv("ChordNode handleRequest");
     // receive request
@@ -323,7 +323,7 @@ void ChordNode::handleRequests()
 
 // sends response to remote node
 // throws ChordConnectionException on error
-void ChordNode::sendResponse(ChordMessageType type, char *data, ssize_t dataSize)
+void ChordNode::sendResponse (ChordMessageType type, char *data, ssize_t dataSize)
 {
     // data that will be send later (ChordHeader + the data)
     char *message = new char[sizeof(ChordHeader_t) + dataSize];
@@ -371,7 +371,7 @@ void ChordNode::sendResponse(ChordMessageType type, char *data, ssize_t dataSize
 
 // sends request to remote node
 // throws ChordConnectionException on error
-void ChordNode::sendRequest(ChordMessageType type, char *data, ssize_t dataSize)
+void ChordNode::sendRequest (ChordMessageType type, char *data, ssize_t dataSize)
 {
     // data that will be send later (ChordHeader + the data)
     char *message = (char *)malloc(sizeof(ChordHeader_t) + dataSize);
@@ -421,7 +421,7 @@ void ChordNode::sendRequest(ChordMessageType type, char *data, ssize_t dataSize)
 
 // receives response from remote node
 // throws ChordConnectionException on error
-char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
+char *ChordNode::recvResponse (ChordMessageType *type, ssize_t *dataSize)
 {
     // receive answer
     ssize_t readBytes { 0 };
@@ -480,7 +480,7 @@ char *ChordNode::recvResponse(ChordMessageType *type, ssize_t *dataSize)
 #pragma mark - Public
 
 // returns this node as struct ChordNode_t
-ChordNode_t ChordNode::chordNode_t() const
+ChordNode_t ChordNode::chordNode_t () const
 {
     ChordNode_t node {0, 0, 0};
     
@@ -491,7 +491,7 @@ ChordNode_t ChordNode::chordNode_t() const
     return node;
 }
 
-bool ChordNode::isAlive()
+bool ChordNode::isAlive ()
 {
     // if we have an open send connection - check if remote node is alive
     if (this->sendSocket > 0) {
@@ -549,7 +549,7 @@ bool ChordNode::isAlive()
     return false;
 }
 
-ChordConnectionStatus ChordNode::establishSendConnection()
+ChordConnectionStatus ChordNode::establishSendConnection ()
 {
     // check required properties
     if (ipAddress.compare("") == 0 || port == 0) {
@@ -618,7 +618,7 @@ ChordConnectionStatus ChordNode::establishSendConnection()
 
 // send connection can be close
 // (f.e. we have a new successor and don't need to keep the connection alive anymore)
-void ChordNode::closeSendConnection()
+void ChordNode::closeSendConnection ()
 {
     sendSocket_mutex.lock();
     if (sendSocket > 0) {
@@ -632,7 +632,7 @@ void ChordNode::closeSendConnection()
 // tell's remote node that i'm his predecessor
 // this method is used by stablilization
 // returns node that the remote node returns
-ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
+ChordNode_t ChordNode::getPredecessorFromRemoteNode (ChordNode *ownNode)
 {
     ChordNode_t pred = ownNode->chordNode_t();
     sendSocket_mutex.lock();
@@ -682,7 +682,7 @@ ChordNode_t ChordNode::getPredecessorFromRemoteNode(ChordNode *ownNode)
 }
 
 // search for a key (or a node)
-ChordNode_t ChordNode::searchForKey(DataID_t key)
+ChordNode_t ChordNode::searchForKey (DataID_t key)
 {
     DataID_t searchKey { htons(key) }; // convert key to network byte order
     
@@ -743,7 +743,7 @@ ChordNode_t ChordNode::searchForKey(DataID_t key)
 }
 
 // receive data for key - nullptr if data not found
-ChordData *ChordNode::requestDataForKey(DataID_t key)
+ChordData *ChordNode::requestDataForKey (DataID_t key)
 {
     DataID_t dataKey { htons(key) }; // convert key to network byte order
     
@@ -828,7 +828,7 @@ ChordData *ChordNode::requestDataForKey(DataID_t key)
 
 // sends the data to the remote node to add it there locally
 // returns true on success
-bool ChordNode::addData(std::string *data)
+bool ChordNode::addData (std::string *data)
 {
     // protect the send socket
     sendSocket_mutex.lock();
@@ -875,7 +875,7 @@ bool ChordNode::addData(std::string *data)
 }
 
 // returns a describing string of the node
-std::string ChordNode::description() const
+std::string ChordNode::description () const
 {
     std::stringstream description;
     

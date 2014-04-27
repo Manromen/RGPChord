@@ -57,8 +57,8 @@ namespace rgp {
         DataID_t getTo() const { return this->to; }
         
         // setter
-        void setFrom(DataID_t from) { this->from = from; }
-        void setTo(DataID_t to) { this->to = to; }
+        void setFrom (DataID_t from) { this->from = from; }
+        void setTo (DataID_t to) { this->to = to; }
         
         // constructor
         ChordDataRange(DataID_t from, DataID_t to) {
@@ -71,39 +71,39 @@ namespace rgp {
         
     public:
         // Constructor
-        Chord(std::string ipAddress, uint16_t port);            // my IP-Address and my Port
-        Chord(std::string, uint16_t, std::string, uint16_t);    // my ipAddress, my Port, remote IP-Address and remote Port - to connect to dht
+        Chord (std::string ipAddress, uint16_t port);            // my IP-Address and my Port
+        Chord (std::string, uint16_t, std::string, uint16_t);    // my ipAddress, my Port, remote IP-Address and remote Port - to connect to dht
         // Destructor
-        ~Chord();
+        ~Chord ();
         
         // attributes
         static const int kKeyLenght { 16 };     // key lenght (exponent m of the formular)
         
         // methods
         void join();                                        // helper for daemon process - main thread will block here
-        ChordHeader_t *createChordHeader(ChordMessageType); // helper to quickly create a Chord Header (returned value needs to be deleted)
+        ChordHeader_t *createChordHeader (ChordMessageType); // helper to quickly create a Chord Header (returned value needs to be deleted)
         
-        int highestID() const;                              // highest possible hash id
-        bool keyIsInMyRange(DataID_t key) const;            // check if i'm responsible for the given key
-        ChordNode_t searchForKey(ChordNode *searchingNode, DataID_t key) const;  // perform a search for the given key
-        ChordNode_t updatePredecessor(ChordNode_t node);    // update predecessor if needed
+        int highestID () const;                              // highest possible hash id
+        bool keyIsInMyRange (DataID_t key) const;            // check if i'm responsible for the given key
+        ChordNode_t searchForKey (ChordNode *searchingNode, DataID_t key) const;  // perform a search for the given key
+        ChordNode_t updatePredecessor (ChordNode_t node);    // update predecessor if needed
         
-        ChordNode *findNodeWithID(NodeID_t nodeID);         // searches all data from chord for given node id (returns nullptr if not found)
+        ChordNode *findNodeWithID (NodeID_t nodeID);         // searches all data from chord for given node id (returns nullptr if not found)
         
         // adds data from remote node to local data map - if we are responsible
         // returns true on success
         // returns false if we aren't responsible
-        bool addDataToHashMap(std::string data);
+        bool addDataToHashMap (std::string data);
         
         // searches local data for data id and returns the data
         // returns nullptr if there is no data with that key
-        ChordData *getDataWithKey(DataID_t dataID);
+        ChordData *getDataWithKey (DataID_t dataID);
         
         // User calls
-        void addData(std::string);          // add data to chord
-        void printDataWithHash(DataID_t);   // prints the data for a given key
-        void printAllLocalData();           // print all data from dataMap to stdout
-        void printStatus();                 // print some status data (successor, predecessor, ...)
+        void addData (std::string);          // add data to chord
+        void printDataWithHash (DataID_t);   // prints the data for a given key
+        void printAllLocalData ();           // print all data from dataMap to stdout
+        void printStatus ();                 // print some status data (successor, predecessor, ...)
         
     private:
         // attributes
@@ -125,13 +125,13 @@ namespace rgp {
         ChordDataRange responsibilityRange { 0, 0 };    // range that i'm responsible for
         
         // methods
-        void initOwnNode(std::string ipAddress, uint16_t port);     // my IP-Address and my Port
-        void waitForIncommingConnections();                         // method of connectThread
-        void joinDHT(std::string c_ipAddress, uint16_t c_port);     // join existing DHT using given ip and port
-        inline void setPredecessor(ChordNode_t node);               // sets the given node as predecessor
+        void initOwnNode (std::string ipAddress, uint16_t port);     // my IP-Address and my Port
+        void waitForIncommingConnections ();                         // method of connectThread
+        void joinDHT (std::string c_ipAddress, uint16_t c_port);     // join existing DHT using given ip and port
+        inline void setPredecessor (ChordNode_t node);               // sets the given node as predecessor
         
-        void stabilize();       // stabilize protocol
-        void fix_fingers();     // fix fingers protocol
+        void stabilize ();       // stabilize protocol
+        void fix_fingers ();     // fix fingers protocol
     };
 }
 

@@ -48,14 +48,14 @@ namespace rgp {
         
     public:
         // Constructor
-        ChordData(DataID_t dataID, std::string data); // dataID, data
+        ChordData (DataID_t dataID, std::string data); // dataID, data
         
         // Getter
-        DataID_t getID() const { return this->dataID; };
-        std::string getData() const { return this->data; }
+        DataID_t getID () const { return this->dataID; };
+        std::string getData () const { return this->data; }
         
         // returns a describing string of the data
-        std::string description() const;
+        std::string description () const;
     };
 }
 
