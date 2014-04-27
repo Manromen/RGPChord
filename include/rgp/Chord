@@ -32,6 +32,7 @@
 #define __RGP__Chord__
 
 #include <rgp/Chord.h>
+#include <rgp/ChordTypes.h>
 #include <rgp/ChordData.h>
 #include <rgp/ChordNode.h>
 
