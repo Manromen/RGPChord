@@ -2,7 +2,7 @@
  Chord.cpp
  Chord
 
- Created by Ralph-Gordon Paul on 13.06.13.
+ Created by Ralph-Gordon Paul on 13. July 2013.
 
  -------------------------------------------------------------------------------
  The MIT License (MIT)
@@ -39,3 +39,7 @@ using namespace rgp;
 Chord::~Chord ()
 {
 }
+
+#pragma mark - Public
+
+#pragma mark - Private

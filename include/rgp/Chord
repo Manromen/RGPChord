@@ -1,9 +1,8 @@
 /*
- example.cpp
  Chord
 
- Created by Ralph-Gordon Paul on 13.06.13.
-
+ Created by Ralph-Gordon Paul on 27. April 2014.
+ 
  -------------------------------------------------------------------------------
  The MIT License (MIT)
  
@@ -29,20 +28,11 @@
  -------------------------------------------------------------------------------
 */
 
-#include <iostream>
-#include <rgp/Chord>
-#include <rgp/Log.h>
+#ifndef __RGP__Chord__
+#define __RGP__Chord__
 
-using namespace rgp;
+#include <rgp/Chord.h>
+#include <rgp/ChordData.h>
+#include <rgp/ChordNode.h>
 
-int main (int argc, const char **argv)
-{
-    
-    return EXIT_SUCCESS;
-}
-
-// print usage information to the output (if usage was wrong)
-void printUsage (const char *programName)
-{
-}
-
+#endif /* defined(__RGP__Chord__) */

@@ -1,9 +1,9 @@
 /*
- example.cpp
+ ChordData.h
  Chord
 
- Created by Ralph-Gordon Paul on 13.06.13.
-
+ Created by Ralph-Gordon Paul on 13. July 2013.
+ 
  -------------------------------------------------------------------------------
  The MIT License (MIT)
  
@@ -29,20 +29,22 @@
  -------------------------------------------------------------------------------
 */
 
+#ifndef __RGP__Chord__ChordData__
+#define __RGP__Chord__ChordData__
+
 #include <iostream>
-#include <rgp/Chord>
-#include <rgp/Log.h>
 
-using namespace rgp;
-
-int main (int argc, const char **argv)
-{
+namespace rgp {
     
-    return EXIT_SUCCESS;
+    class ChordData {
+        
+    public:
+        ChordData ();
+        ~ChordData ();
+        
+    private:
+        
+    };
 }
 
-// print usage information to the output (if usage was wrong)
-void printUsage (const char *programName)
-{
-}
-
+#endif /* defined(__RGP__Chord__ChordData__) */

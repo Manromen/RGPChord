@@ -1,8 +1,8 @@
 /*
- example.cpp
+ ChordNode.cpp
  Chord
 
- Created by Ralph-Gordon Paul on 13.06.13.
+ Created by Ralph-Gordon Paul on 13. July 2013.
 
  -------------------------------------------------------------------------------
  The MIT License (MIT)
@@ -29,20 +29,17 @@
  -------------------------------------------------------------------------------
 */
 
-#include <iostream>
-#include <rgp/Chord>
+#include <rgp/ChordNode.h>
 #include <rgp/Log.h>
 
 using namespace rgp;
 
-int main (int argc, const char **argv)
-{
-    
-    return EXIT_SUCCESS;
-}
+#pragma mark - Constructor / Destructor
 
-// print usage information to the output (if usage was wrong)
-void printUsage (const char *programName)
+ChordNode::~ChordNode ()
 {
 }
 
+#pragma mark - Public
+
+#pragma mark - Private
