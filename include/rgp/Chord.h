@@ -39,14 +39,13 @@
 #include <thread>
 #include <memory>
 
-#include <rgp/ChordTypes.h>
-#include <rgp/ChordNode.h>
-#include <rgp/ChordData.h>
+#include <rgp/Chord>
 
 namespace rgp {
     
     // forward declaration
     class ChordData;
+    class ChordNode;
     
     class Chord {
         
@@ -58,7 +57,7 @@ namespace rgp {
         static const int kKeyLenght { 32 };
         
         // helper to quickly create a Chord Header
-        std::shared_ptr<ChordHeader> createChordHeader (ChordMessageType);
+        ChordHeader createChordHeader (ChordMessageType);
         
         // highest possible hash id
         int highestID () const;
@@ -113,7 +112,7 @@ namespace rgp {
         // safeguard access to connectedNodes list
         std::mutex _connectedNodes_mutex;
         // range that i'm responsible for
-        ChordRange responsibilityRange { .from = 0, .to = 0 };
+        ChordRange _responsibilityRange { .from = 0, .to = 0 };
         
         // method of connectThread
         void waitForIncommingConnections ();

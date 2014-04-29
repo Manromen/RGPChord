@@ -78,6 +78,13 @@ namespace rgp {
         ChordMessageTypePredecessor
     } ChordMessageType;
     
+    // feedback of connect()
+    typedef enum : uint8_t {
+        ChordConnectionStatusSuccessfullyConnected = 1,
+        ChordConnectionStatusConnectingFailed,
+        ChordConnectionStatusAlreadyConnected
+    } ChordConnectionStatus;
+    
     // node data as struct
     // this struct should always contain network byte order (for consistency)
     typedef struct {

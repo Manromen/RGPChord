@@ -34,6 +34,8 @@
 
 #include <iostream>
 
+#include <rgp/Chord>
+
 namespace rgp {
     
     class ChordData {
