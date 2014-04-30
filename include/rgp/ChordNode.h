@@ -46,8 +46,8 @@ namespace rgp {
     public:
         // Constructor
         // Node ID, IP-Address, Port, associated Chord
-        ChordNode (ChordHeaderNode, std::string, uint16_t,
-                   std::shared_ptr<Chord>);
+        ChordNode (ChordId node, std::string ip, uint16_t port,
+                   std::shared_ptr<Chord> chord);
         // Destructor
         ~ChordNode ();
         
@@ -90,11 +90,11 @@ namespace rgp {
         // receive data for key
         // returns nullptr if data not found
         // throws ChordConnectionException on error
-        std::shared_ptr<ChordData> requestDataForKey (ChordId key);
+        std::shared_ptr<uint8_t> requestDataForKey (ChordId key);
         
         // sends the data to the remote node to add it there locally
         // returns true on success
-        bool addData (std::string *data);
+        bool addData (std::shared_ptr<ChordData> data);
         
         // returns a describing string of the instance (node id, ip, ...)
         std::string description () const;
@@ -128,17 +128,20 @@ namespace rgp {
         
         // sends response to remote node
         // throws ChordConnectionException on error
-        void sendResponse (ChordMessageType type, char *data, ssize_t dataSize);
+        void sendResponse (ChordMessageType type, std::shared_ptr<uint8_t> data,
+                           ssize_t dataSize);
         
         // sends request to remote node
         // throws ChordConnectionException on error
-        void sendRequest (ChordMessageType type, char *data, ssize_t dataSize);
+        void sendRequest (ChordMessageType type, std::shared_ptr<uint8_t> data,
+                          ssize_t dataSize);
         
         // receives response from remote node
         // returns pointer to reveived data or nullptr if
         // there was no received data
         // throws ChordConnectionException on error
-        char *recvResponse (ChordMessageType *type, ssize_t *dataSize);
+        std::shared_ptr<uint8_t> recvResponse (ChordMessageType type,
+                                               ssize_t dataSize);
     };
 }
 

@@ -44,7 +44,6 @@
 namespace rgp {
     
     // forward declaration
-    class ChordData;
     class ChordNode;
     
     class Chord {
@@ -79,11 +78,11 @@ namespace rgp {
         // adds data from remote node to local data map - if we are responsible
         // returns true on success
         // returns false if we aren't responsible
-        bool addDataToHashMap (std::string data);
+        bool addDataToHashMap (std::shared_ptr<uint8_t> data);
         
         // searches local data for data id and returns the data
         // returns nullptr if there is no data with that key
-        std::shared_ptr<ChordData> getDataWithKey (ChordId dataId);
+        std::shared_ptr<uint8_t> getDataWithKey (ChordId dataId);
         
     private:
         // will be initialised from constructor
@@ -93,7 +92,7 @@ namespace rgp {
         std::list<std::shared_ptr<ChordNode>> _fingerTable;
         
         // table of all local data (the data this node is responsible for)
-        std::map<int, std::shared_ptr<ChordData>> _dataMap;
+        std::map<int, std::shared_ptr<uint8_t>> _dataMap;
         
         // protect dataMap
         std::mutex _dataMap_mutex;

@@ -43,6 +43,7 @@ namespace rgp {
     
     // specify type of message
     typedef enum : uint8_t {
+        
         // if someone connects he identifies himself with his first package
         ChordMessageTypeIdentify = 1,
         
@@ -106,6 +107,17 @@ namespace rgp {
         // size of data that follows (0 if there is no data)
         uint32_t dataSize;
     } ChordHeader;
+    
+    // exceptions
+    class ChordConnectionException {
+        
+    private:
+        std::string reason;
+        
+    public:
+        ChordConnectionException (std::string reason) : reason(reason) {}
+        std::string what () { return reason; }
+    };
 }
 
 #endif /* defined(__RGP__Chord__ChordTypes__) */
