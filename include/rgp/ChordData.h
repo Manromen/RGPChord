@@ -38,14 +38,38 @@
 
 namespace rgp {
     
+    /**
+     @brief Data that can be send / received through Chord.
+     @details Your data that will be send through Chord has to inherit
+     from this data class. There are two methods to serialize the instance.
+     */
     class ChordData {
-        
-    public:
-        ChordData ();
-        ~ChordData ();
         
     private:
         
+        /**
+         @brief Create binary data of an object.
+         @details Create a binary data that represents Your object.
+         The first 4 bytes (uint32_t) are reserved to represent the data size.
+         The data size has to be in network byteorder.
+         You are responsible for that.
+         @return The binary data that represents the data to be send.
+         thtough Chord.
+         @sa updateWithSerializedData()
+         */
+        virtual std::shared_ptr<uint8_t> serializedData () const;
+        
+        /**
+         @brief Update or Recreate the object using the given binary data.
+         @details Use this method to (re-)create an data object.
+         The first 4 bytes (uint32_t) are reserved to represent the data size.
+         The data size is in network byteorder.
+         @param data The binary data to recreate the object.
+         @sa serializedData()
+         */
+        virtual void updateWithSerializedData(std::shared_ptr<uint8_t> data);
+        
+        friend class ChordNode;
     };
 }
 
