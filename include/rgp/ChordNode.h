@@ -41,7 +41,8 @@ namespace rgp {
     // forward declaration
     class Chord;
     
-    class ChordNode {
+    class ChordNode : std::enable_shared_from_this<ChordNode>
+    {
         
     public:
         // Constructor

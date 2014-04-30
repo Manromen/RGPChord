@@ -32,7 +32,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # create library
 add_library(rgp-chord STATIC
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Chord.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/ChordData.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ChordNode.cpp)
 
 # create example executable

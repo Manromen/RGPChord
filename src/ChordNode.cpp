@@ -32,9 +32,10 @@
 #include <rgp/ChordNode.h>
 #include <rgp/Log.h>
 
-//#include <sstream>
+#include <sstream>
 #include <unistd.h>
-//#include <cstring>
+#include <cstring>
+#include <memory>
 
 // network
 #include <arpa/inet.h>
@@ -127,7 +128,7 @@ void ChordNode::handleRequests ()
             
             // alloc space for the data
             uint32_t dataSize = ntohl(requestHeader.dataSize);
-            data = std::make_shared<uint8_t>(new uint8_t[dataSize], std::default_delete<uint8_t[]>());
+            data = std::shared_ptr<uint8_t>(new uint8_t[dataSize], std::default_delete<uint8_t[]>());
             
             // receive the data
             readBytes = recv(_receiveSocket, data.get(), ntohl(requestHeader.dataSize), 0);
@@ -177,7 +178,7 @@ void ChordNode::handleRequests ()
                 ChordId key = ntohl(*data);
                 
                 // search the key (checks local / sends search)
-                ChordHeaderNode node = _chord->searchForKey(std::make_shared<ChordNode>(this), key);
+                ChordHeaderNode node = _chord->searchForKey(shared_from_this(), key);
                 
                 // create understandable response format
                 std::shared_ptr<uint8_t> nodeData(new uint8_t[sizeof(ChordHeaderNode)], std::default_delete<uint8_t[]>());
