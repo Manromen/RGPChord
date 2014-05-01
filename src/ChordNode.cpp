@@ -58,7 +58,9 @@ ChordNode::~ChordNode ()
     try {
         // wait till request handler finished
         _requestHandlerThread.join();
-    } catch (...) {} // called if requestHandlerThread is not running (or not joinable)
+        
+        // catched if requestHandlerThread is not running (or not joinable)
+    } catch (...) {}
     
     // disconnect sendSocket if connected
     if (_sendSocket != -1) {
@@ -69,12 +71,385 @@ ChordNode::~ChordNode ()
 
 #pragma mark - Public
 
+// returns this node as struct ChordHeaderNode
+ChordHeaderNode ChordNode::chordNode () const
+{
+    ChordHeaderNode node {0, 0, 0};
+    
+    node.nodeId = htons(_nodeID);
+    node.ip = htonl(inet_addr(_ipAddress.c_str()));
+    node.port = htons(_port);
+    
+    return node;
+}
+
+bool ChordNode::isAlive ()
+{
+    // if we have an open send connection - check if remote node is alive
+    if (_sendSocket > 0) {
+        
+        _sendSocket_mutex.lock(); // we use send socket to send data and receive the response
+        try {
+            // Hearbeat
+            sendRequest(ChordMessageTypeHeartbeat, nullptr, 0);
+            
+        } catch (ChordConnectionException &exception) {
+            // error
+            Log::sharedLog()->error(std::string("ChordNode::isAlive(): coulnd't send request: ") += exception.what());
+            
+            close(_sendSocket);
+            _sendSocket = -1;
+        }
+        
+        // receive heartbeat answer
+        if (_sendSocket > 0) {
+            
+            try {
+                
+                std::shared_ptr<ChordMessageType> type;
+                std::shared_ptr<ssize_t> dataSize;
+                
+                std::shared_ptr<uint8_t> data = recvResponse(type, dataSize);
+                
+                // success -> node is alive
+                if (*type == ChordMessageTypeHeartbeatReply) {
+                    _sendSocket_mutex.unlock();
+                    return true;
+                }
+                
+            } catch (ChordConnectionException &exception) {
+                // error
+                Log::sharedLog()->error(std::string("ChordNode::isAlive(): coulnd't receive request: ") += exception.what());
+                
+                close(_sendSocket);
+                _sendSocket = -1;
+            }
+        }
+        _sendSocket_mutex.unlock();
+    }
+    
+    // if receive connection is alive - we don't need a hearbeat for this
+    if (_receiveSocket > 0) {
+        return true;
+    }
+    
+    return false;
+}
+
+ChordConnectionStatus ChordNode::establishSendConnection ()
+{
+    // check required properties
+    if (_ipAddress.compare("") == 0 || _port == 0) {
+        return ChordConnectionStatusConnectingFailed;
+    }
+    
+    _sendSocket_mutex.lock();
+    
+    // check if already connected
+    if (_sendSocket != -1) {
+        _sendSocket_mutex.unlock();
+        return ChordConnectionStatusAlreadyConnected;
+    }
+    
+    // create socket
+    _sendSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    
+    // create sockaddr
+    struct sockaddr_in addr4client;
+    memset(&addr4client, 0, sizeof(addr4client)); // fill struct with zeros
+#ifndef __linux__
+    addr4client.sin_len = sizeof(addr4client);
+#endif
+    addr4client.sin_family = AF_INET;
+    addr4client.sin_port = htons(_port);
+    
+    if((addr4client.sin_addr.s_addr = inet_addr(_ipAddress.c_str())) == (unsigned long)INADDR_NONE)
+    {
+        // ERROR: INADDR_NONE - try with hostname
+        struct hostent *hostp = gethostbyname(_ipAddress.c_str());
+        if (hostp == NULL) {
+            Log::sharedLog()->errorWithErrno("ChordNode::establishSendConnection():hostent failed - cannot use given host address ", errno);
+            close(_sendSocket);
+            _sendSocket = -1;
+            _sendSocket_mutex.unlock();
+            return ChordConnectionStatusConnectingFailed; // we cannot connect
+        } else {
+            memcpy(&addr4client.sin_addr, hostp->h_addr, sizeof(addr4client.sin_addr));
+        }
+    }
+    
+    // connect
+    if (connect(_sendSocket, (struct sockaddr*)&addr4client, sizeof(struct sockaddr_in)) != 0) {
+        Log::sharedLog()->errorWithErrno("ChordNode::establishSendConnection():connect(): ", errno);
+        close(_sendSocket);
+        _sendSocket = -1;
+        _sendSocket_mutex.unlock();
+        return ChordConnectionStatusConnectingFailed; // we cannot connect
+    }
+    
+    // identify ourself
+    try {
+        sendRequest(ChordMessageTypeIdentify, NULL, 0);
+    } catch (ChordConnectionException &exception) {
+        // send failed
+        Log::sharedLog()->error(std::string("ChordNode::establishSendConnection():identify ") += exception.what());
+        close(_sendSocket);
+        _sendSocket = -1;
+        _sendSocket_mutex.unlock();
+        return ChordConnectionStatusConnectingFailed; // we cannot connect
+    }
+    
+    _sendSocket_mutex.unlock();
+    return ChordConnectionStatusSuccessfullyConnected;
+}
+
+// send connection can be close
+// (f.e. we have a new successor and don't need to keep the connection alive anymore)
+void ChordNode::closeSendConnection ()
+{
+    _sendSocket_mutex.lock();
+    if (_sendSocket > 0) {
+        
+        close(_sendSocket);
+        _sendSocket = -1;
+    }
+    _sendSocket_mutex.unlock();
+}
+
+// tell's remote node that i'm his predecessor
+// this method is used by stablilization
+// returns node that the remote node returns
+ChordHeaderNode ChordNode::getPredecessorFromRemoteNode (std::shared_ptr<ChordNode> ownNode)
+{
+    ChordHeaderNode pred = ownNode->chordNode();
+    _sendSocket_mutex.lock();
+    // update predecessor with own node
+    try {
+        std::shared_ptr<uint8_t> sendData {new uint8_t[sizeof(ChordHeaderNode)], std::default_delete<uint8_t[]>()};
+        memcpy(sendData.get(), &pred, sizeof(ChordHeaderNode));
+        
+        sendRequest(ChordMessageTypeUpdatePredecessor, sendData, sizeof(ChordHeaderNode));
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::getPredecessorFromRemoteNode():sendRequest(): ") += exception.what());
+        _sendSocket_mutex.unlock();
+        throw ChordConnectionException { "couldn't send request" };
+    }
+    
+    // receive the answer
+    std::shared_ptr<ChordMessageType> responseType;
+    std::shared_ptr<uint8_t> data;
+    std::shared_ptr<ssize_t> dataSize { 0 };
+    
+    try {
+        data = recvResponse(responseType, dataSize);
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::getPredecessorFromRemoteNode():recvResponse(): ") += exception.what());;
+        _sendSocket_mutex.unlock();
+        throw ChordConnectionException { "couldn't receive response" };
+    }
+    _sendSocket_mutex.unlock();
+    
+    // check for available data
+    if (*dataSize == sizeof(ChordHeaderNode)) {
+        
+        ChordHeaderNode receivedNode { 0 };
+        if (!data) {
+            Log::sharedLog()->error("responseData == nullptr");
+        } else {
+            memcpy(&receivedNode, &data, sizeof(ChordHeaderNode));
+        }
+        return receivedNode;
+        
+    } else {
+        Log::sharedLog()->error("answer contains unexpected data size");
+        throw ChordConnectionException { "answer contains unexpected data size" };
+    }
+}
+
+// search for a key (or a node)
+ChordHeaderNode ChordNode::searchForKey (ChordId key)
+{
+    ChordId searchKey { htons(key) }; // convert key to network byte order
+    
+    std::shared_ptr<uint8_t> searchData { new uint8_t[sizeof(ChordId)], std::default_delete<uint8_t[]>() };
+    memcpy(&searchData, &searchKey, sizeof(ChordId));
+    
+    // send search
+    _sendSocket_mutex.lock();
+    try {
+        sendRequest(ChordMessageTypeSearch, searchData, sizeof(ChordId));
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::searchForKey():sendRequest(): ") += exception.what());
+    }
+    
+    // receive result
+    std::shared_ptr<ChordMessageType> responseType;
+    std::shared_ptr<uint8_t> responseData;
+    std::shared_ptr<ssize_t> responseDataSize { 0 };
+    
+    try {
+        responseData = recvResponse(responseType, responseDataSize);
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::searchForKey():recvResponse(): ") += exception.what());
+    }
+    _sendSocket_mutex.unlock();
+    
+    switch (*responseType) {
+        case ChordMessageTypeSearchNodeResponse:
+        {
+            // check for available data
+            if (*responseDataSize == sizeof(ChordHeaderNode)) {
+                
+                ChordHeaderNode receivedNode { 0 };
+                if (!responseData) {
+                    Log::sharedLog()->error("responseData == nullptr");
+                } else {
+                    memcpy(&receivedNode, &responseData, sizeof(ChordHeaderNode));
+                }
+                
+                return receivedNode;
+                
+            } else {
+                Log::sharedLog()->error("answer contains unexpected data size");
+                throw ChordConnectionException { "answer contains unexpected data size" };
+            }
+            break;
+        }
+            
+        default:
+        {
+            Log::sharedLog()->error(std::string("received unexpected answer type: ") += std::to_string(*responseType));
+            throw ChordConnectionException { "received unexpected answer: " };
+            break;
+        }
+    }
+}
+
+// receive data for key - nullptr if data not found
+std::shared_ptr<uint8_t> ChordNode::requestDataForKey (ChordId key)
+{
+    ChordId dataKey { htons(key) }; // convert key to network byte order
+    
+    std::shared_ptr<uint8_t> requestData { new uint8_t[sizeof(ChordId)], std::default_delete<uint8_t[]>() };
+    memcpy(&requestData, &dataKey, sizeof(ChordId));
+    
+    // send search
+    _sendSocket_mutex.lock();
+    try {
+        sendRequest(ChordMessageTypeDataRequest, requestData, sizeof(ChordId));
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::requestDataForKey():sendRequest(): ") += exception.what());
+    }
+    
+    // receive the data
+    std::shared_ptr<ChordMessageType> responseType;
+    std::shared_ptr<uint8_t> responseData;
+    std::shared_ptr<ssize_t> responseDataSize { 0 };
+    
+    try {
+        responseData = recvResponse(responseType, responseDataSize);
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::requestDataForKey():recvResponse(): ") += exception.what());
+    }
+    _sendSocket_mutex.unlock();
+    
+    switch (*responseType) {
+        case ChordMessageTypeDataAnswer:
+        {
+            // check for available data
+            if (responseDataSize > 0) {
+                
+                if (!responseData) {
+                    Log::sharedLog()->error("ChordNode::requestDataForKey(): responseData == nullptr");
+                } else {
+                    
+                    return responseData;
+                }
+                
+            } else {
+                Log::sharedLog()->error("answer contains no data");
+                throw ChordConnectionException { "answer contains no data" };
+            }
+            break;
+        }
+            
+        case ChordMessageTypeDataNotFound:
+        {
+            Log::sharedLog()->error("ChordNode::requestDataForKey(): received data not found from remote node");
+            break;
+        }
+            
+        default:
+        {
+            Log::sharedLog()->error(std::string("received unexpected answer type: ") += std::to_string(*responseType));
+            throw ChordConnectionException { "received unexpected answer: " };
+            break;
+        }
+    }
+    
+    return nullptr;
+}
+
+// sends the data to the remote node to add it there locally
+// returns true on success
+bool ChordNode::addData (std::shared_ptr<ChordData> data)
+{
+    // protect the send socket
+    _sendSocket_mutex.lock();
+    
+    std::shared_ptr<uint8_t> binaryData { (*data).serializedData() };
+    
+    // get data size from binary
+    uint8_t binaryDataSizeNBO[4] { 0 };
+    memcpy(&binaryDataSizeNBO, &binaryData, 4 * sizeof(uint8_t));
+    uint32_t binaryDataSize { ntohl(static_cast<uint32_t>(*binaryDataSizeNBO)) };
+    
+    // send the data
+    try {
+        sendRequest(ChordMessageTypeDataAdd, binaryData, binaryDataSize);
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::addData():sendRequest(): ") += exception.what());
+    }
+    
+    std::shared_ptr<ChordMessageType> responseType;
+    std::shared_ptr<uint8_t> responseData;
+    std::shared_ptr<ssize_t> responseDataSize { 0 };
+    
+    // receive answer
+    try {
+        responseData = recvResponse(responseType, responseDataSize);
+    } catch (ChordConnectionException &exception) {
+        Log::sharedLog()->error(std::string("ChordNode::addData():recvResponse(): ") += exception.what());
+    }
+    
+    // we are done with the send socket
+    _sendSocket_mutex.unlock();
+    
+    if (*responseType == ChordMessageTypeDataAddSuccess) {
+        return true;
+    }
+    
+    return false;
+}
+
+// returns a describing string of the node
+std::string ChordNode::description () const
+{
+    std::stringstream description;
+    
+    description << "{ Node ID: " << _nodeID << " IP: " << _ipAddress << " Port: " << _port << " }";
+    
+    return description.str();
+}
+
 #pragma mark - Private
 
 void ChordNode::setReceiveSocket (int socket)
 {
     if (_receiveSocket != -1) {
-        Log::sharedLog()->error(std::string("warning receivesocket for node: ") += std::to_string(_nodeID) += " was already set");
+        Log::sharedLog()->error(std::string("warning receivesocket for node: ")
+                                += std::to_string(_nodeID)
+                                += " was already set");
     }
     
     // stop request handler if already started
@@ -82,7 +457,9 @@ void ChordNode::setReceiveSocket (int socket)
     try {
         // wait till request handler finished
         _requestHandlerThread.join();
-    } catch (...) {} // called if requestHandlerThread is not running (or not joinable)
+        
+        // called if requestHandlerThread is not running (or not joinable)
+    } catch (...) {}
     
     _stopRequestHandlerThread = false;
     _receiveSocket = socket;
@@ -145,8 +522,10 @@ void ChordNode::handleRequests ()
             }
             
             if (readBytes != static_cast<ssize_t>(ntohl(requestHeader.dataSize))) {
-                Log::sharedLog()->error((std::string("data size: ") += std::to_string(ntohl(requestHeader.dataSize))
-                                         += " readBytes: ") += std::to_string(readBytes));
+                Log::sharedLog()->error((std::string("data size: ")
+                                         += std::to_string(ntohl(requestHeader.dataSize))
+                                         += " readBytes: ")
+                                        += std::to_string(readBytes));
                 Log::sharedLog()->error("recv(): don't received the expected data size");
                 break;
             }
@@ -413,7 +792,7 @@ void ChordNode::sendRequest (ChordMessageType type, std::shared_ptr<uint8_t> dat
 
 // receives response from remote node
 // throws ChordConnectionException on error
-std::shared_ptr<uint8_t> ChordNode::recvResponse (ChordMessageType type, ssize_t dataSize)
+std::shared_ptr<uint8_t> ChordNode::recvResponse (std::shared_ptr<ChordMessageType> type, std::shared_ptr<ssize_t> dataSize)
 {
     // receive answer
     ssize_t readBytes { 0 };
@@ -439,14 +818,14 @@ std::shared_ptr<uint8_t> ChordNode::recvResponse (ChordMessageType type, ssize_t
         throw ChordConnectionException { "don't received enough data ... something bad happened" };
     }
     
-    type = static_cast<ChordMessageType>(responseHeader.type);
-    dataSize = ntohl(responseHeader.dataSize);
+    *type = static_cast<ChordMessageType>(responseHeader.type);
+    *dataSize = ntohl(responseHeader.dataSize);
     
     if (dataSize > 0) {
-        std::shared_ptr<uint8_t> data(new uint8_t[dataSize], std::default_delete<uint8_t[]>());
+        std::shared_ptr<uint8_t> data(new uint8_t[*dataSize], std::default_delete<uint8_t[]>());
         
         // receive the data
-        if ((readBytes = recv(_sendSocket, data.get(), dataSize, 0)) <= 0) {
+        if ((readBytes = recv(_sendSocket, &data, *dataSize, 0)) <= 0) {
             if (readBytes == 0) {
                 Log::sharedLog()->error(std::string("Node with id: ") += std::to_string(_nodeID) += " closed the connection");
                 close(_sendSocket);
@@ -458,7 +837,7 @@ std::shared_ptr<uint8_t> ChordNode::recvResponse (ChordMessageType type, ssize_t
         }
         
         // error check
-        if (readBytes != dataSize) {
+        if (readBytes != *dataSize) {
             Log::sharedLog()->error("don't received enough data ... something bad happened");
             throw ChordConnectionException { "don't received enough data ... something bad happened" };
         }

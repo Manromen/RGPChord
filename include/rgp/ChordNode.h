@@ -65,7 +65,7 @@ namespace rgp {
         void setReceiveSocket (int socket);
         
         // returns this node as struct ChordHeaderNode
-        ChordHeaderNode chordNode_t () const;
+        ChordHeaderNode chordNode () const;
         
         // checks if connection is open
         bool isAlive ();
@@ -141,8 +141,8 @@ namespace rgp {
         // returns pointer to reveived data or nullptr if
         // there was no received data
         // throws ChordConnectionException on error
-        std::shared_ptr<uint8_t> recvResponse (ChordMessageType type,
-                                               ssize_t dataSize);
+        std::shared_ptr<uint8_t> recvResponse (std::shared_ptr<ChordMessageType> type,
+                                               std::shared_ptr<ssize_t> dataSize);
     };
 }
 
