@@ -576,3 +576,131 @@ inline void Chord::setPredecessor (ChordHeaderNode node)
         _predecessor->addData(data);
     }
 }
+
+#pragma mark -
+
+void Chord::stabilize ()
+{
+    const int kStandardDelaySeconds { 10 };
+    std::chrono::seconds delay_time(1); // first stablize will connect to dht - so do it quick
+    
+    while (!_stopStabilizeThread) {
+        
+        std::this_thread::sleep_for(delay_time);
+        delay_time = std::chrono::seconds (kStandardDelaySeconds); // reset back to standard
+        RGPLOGV("stabilize ...");
+        
+        if (!_successor) {
+            if (_predecessor) {
+                
+                // stabilize will fix successor now
+                // very inefficient, but we don't have a finger table
+                _successor = _predecessor;
+                _successor->establishSendConnection();
+            }
+        }
+        
+        if (_successor) {
+            try {
+                ChordHeaderNode pred = _successor->getPredecessorFromRemoteNode(_ownNode);
+                
+                RGPLOGV(((std::string("stabilize (") += std::to_string(_ownNode->getNodeID())
+                          += ")... my successors(") += std::to_string(_successor->getNodeID()) += ") predecessor: ")
+                        += std::to_string(ntohs(pred.nodeId)));
+                
+                // check if we are predecessor
+                if (ntohs(pred.nodeId) != _ownNode->getNodeID()) {
+                    
+                    // close send connection to successor - we don't need the connection anymore (if node isn't in finger table)
+                    _successor->closeSendConnection();
+                    
+                    // check if we have already a connection to the new successor
+                    std::shared_ptr<ChordNode> newSucc { findNodeWithId(ntohs(pred.nodeId)) };
+                    
+                    if (newSucc) {
+                        RGPLOGV("stabilize newSucc ...");
+                        _successor = newSucc;
+                        _successor->establishSendConnection();
+                    } else {
+                        RGPLOGV("stabilize create new node ...");
+                        
+                        // create node for successor
+                        struct in_addr predIP;
+                        predIP.s_addr = ntohl(pred.ip);
+                        _successor = std::make_shared<ChordNode>(ntohs(pred.nodeId), inet_ntoa(predIP), ntohs(pred.port), shared_from_this());
+                        
+                        // add successor to list of connected nodes
+                        _connectedNodes_mutex.lock();
+                        _connectedNodes.push_back(_successor);
+                        _connectedNodes_mutex.unlock();
+                        
+                        _successor->establishSendConnection();
+                        delay_time = std::chrono::seconds (1); // don't wait so long with next poll
+                        continue;
+                    }
+                }
+                
+            } catch (ChordConnectionException &exception) {
+                Log::sharedLog()->error("Chord::stabilize(): error communicating with successor");
+                
+                // try to connect again
+                ChordConnectionStatus succStatus = _successor->establishSendConnection();
+                
+                // successor is dead -> set successor to nullptr
+                if (succStatus == ChordConnectionStatusConnectingFailed) {
+                    Log::sharedLog()->error("Chord::stabilize(): error can't establish connection to successor " \
+                                            "--> setting successor to nullptr");
+                    _successor.reset();
+                }
+            }
+        }
+        
+        // check that predecessor is alive
+        if (_predecessor) {
+            if (!_predecessor->isAlive()) {
+                
+                RGPLOGV("Chord::stabilize(): my predecessor died...");
+                
+                // predecessor died -> remove from connected list
+                _connectedNodes_mutex.lock();
+                _connectedNodes.remove(_predecessor);
+                _connectedNodes_mutex.unlock();
+                
+                // no predecessor -> set predecessor to nullptr
+                _predecessor.reset();
+            }
+        }
+        
+        /// memory management
+        // cleanup connectedThreads list
+        _connectedNodes_mutex.lock();
+        std::list<std::shared_ptr<ChordNode>> nodesToDelete;
+        for (std::shared_ptr<ChordNode> node : _connectedNodes) {
+            if (node != _successor && node != _predecessor) { // don't delete successor or predecessor
+                if (!node->isAlive()) {
+                    // if dead remove node
+                    nodesToDelete.push_back(node);
+                    // we cannot remove it directly -> altering the list while iterating -> segv
+                }
+            }
+        }
+        
+        // delete all nodes now
+        for(std::shared_ptr<ChordNode> node : nodesToDelete) {
+            _connectedNodes.remove(node);
+        }
+        _connectedNodes_mutex.unlock();
+    }
+}
+
+// TODO: implement fix_fingers
+void Chord::fixFingers ()
+{
+    /*
+     Jeder Knoten Kn führt periodisch eine fix_fingers() Funktion aus:
+     -  Diese iteriert über die Einträge der Fingertable
+     (oder per Zufall einen auswählen)
+     -  Und sucht für jeden Eintrag i den aktuell
+     gültigen Nachfolger von n + 2i-1
+     */
+}
