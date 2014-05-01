@@ -41,8 +41,7 @@ namespace rgp {
     // forward declaration
     class Chord;
     
-    class ChordNode : std::enable_shared_from_this<ChordNode>
-    {
+    class ChordNode {
         
     public:
         // Constructor
@@ -95,7 +94,7 @@ namespace rgp {
         
         // sends the data to the remote node to add it there locally
         // returns true on success
-        bool addData (std::shared_ptr<ChordData> data);
+        bool addData (std::shared_ptr<uint8_t> data);
         
         // returns a describing string of the instance (node id, ip, ...)
         std::string description () const;
@@ -122,7 +121,7 @@ namespace rgp {
         std::atomic<bool> _stopRequestHandlerThread { false };
         
         // associated Chord
-        std::shared_ptr<Chord> _chord { nullptr };
+        std::weak_ptr<Chord> _chord;
         
         // handle incomming data (heartbeat, search, ...)
         void handleRequests ();

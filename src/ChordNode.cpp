@@ -46,9 +46,9 @@ using namespace rgp;
 #pragma mark - Constructor / Destructor
 
 ChordNode::ChordNode (ChordId node, std::string ip, uint16_t port, std::shared_ptr<Chord> chord)
-: _nodeID(node), _ipAddress(ip), _port(port), _chord(chord)
+: _nodeID(node), _ipAddress(ip), _port(port)
 {
-    
+    _chord = chord;
 }
 
 ChordNode::~ChordNode ()
@@ -392,21 +392,19 @@ std::shared_ptr<uint8_t> ChordNode::requestDataForKey (ChordId key)
 
 // sends the data to the remote node to add it there locally
 // returns true on success
-bool ChordNode::addData (std::shared_ptr<ChordData> data)
+bool ChordNode::addData (std::shared_ptr<uint8_t> data)
 {
     // protect the send socket
     _sendSocket_mutex.lock();
     
-    std::shared_ptr<uint8_t> binaryData { (*data).serializedData() };
-    
     // get data size from binary
-    uint8_t binaryDataSizeNBO[4] { 0 };
-    memcpy(&binaryDataSizeNBO, &binaryData, 4 * sizeof(uint8_t));
-    uint32_t binaryDataSize { ntohl(static_cast<uint32_t>(*binaryDataSizeNBO)) };
+    uint8_t dataSizeNBO[4] { 0 };
+    memcpy(&dataSizeNBO, &data, 4 * sizeof(uint8_t));
+    uint32_t dataSize { ntohl(static_cast<uint32_t>(*dataSizeNBO)) };
     
     // send the data
     try {
-        sendRequest(ChordMessageTypeDataAdd, binaryData, binaryDataSize);
+        sendRequest(ChordMessageTypeDataAdd, data, dataSize);
     } catch (ChordConnectionException &exception) {
         Log::sharedLog()->error(std::string("ChordNode::addData():sendRequest(): ") += exception.what());
     }
@@ -484,6 +482,12 @@ void ChordNode::handleRequests ()
         
         data.reset();
         
+        // create strong pointer to chord
+        std::shared_ptr<Chord> chord { _chord };
+        if (!chord) {
+            RGPLOG_ERROR("Lost chord pointer!");
+        }
+        
         // wait for incomming data
         if ((readBytes = recv(_receiveSocket, &requestHeader, sizeof(ChordHeader), 0)) <= 0) {
             if (readBytes == 0) {
@@ -557,7 +561,7 @@ void ChordNode::handleRequests ()
                 ChordId key = ntohl(*data);
                 
                 // search the key (checks local / sends search)
-                ChordHeaderNode node = _chord->searchForKey(shared_from_this(), key);
+                ChordHeaderNode node = chord->searchForKey(_nodeID, key);
                 
                 // create understandable response format
                 std::shared_ptr<uint8_t> nodeData(new uint8_t[sizeof(ChordHeaderNode)], std::default_delete<uint8_t[]>());
@@ -590,10 +594,12 @@ void ChordNode::handleRequests ()
                     break;
                 }
                 
+                
+                
                 // apply new predecessor
                 ChordHeaderNode node;
                 memcpy(&node, data.get(), sizeof(ChordHeaderNode));
-                ChordHeaderNode newPredecessor = _chord->updatePredecessor(node);
+                ChordHeaderNode newPredecessor = chord->updatePredecessor(node);
                 
                 // create understandable response format
                 std::shared_ptr<uint8_t> nodeData(new uint8_t[sizeof(ChordHeaderNode)], std::default_delete<uint8_t[]>());
@@ -628,7 +634,7 @@ void ChordNode::handleRequests ()
                     break;
                 }
                 
-                bool added = _chord->addDataToHashMap(data);
+                bool added = chord->addDataToHashMap(data);
                 
                 try {
                     if (added) {
@@ -658,7 +664,7 @@ void ChordNode::handleRequests ()
                 ChordId key = ntohl(*data);
                 
                 // search for the data
-                std::shared_ptr<uint8_t> data = _chord->getDataWithKey(key);
+                std::shared_ptr<uint8_t> data = chord->getDataWithKey(key);
                 
                 if (data) {
                     
@@ -702,11 +708,17 @@ void ChordNode::handleRequests ()
 // throws ChordConnectionException on error
 void ChordNode::sendResponse (ChordMessageType type, std::shared_ptr<uint8_t> data, ssize_t dataSize)
 {
+    // create strong pointer to chord
+    std::shared_ptr<Chord> chord { _chord };
+    if (!chord) {
+        RGPLOG_ERROR("Lost chord pointer!");
+    }
+    
     // data that will be send later (ChordHeader + the data)
     uint8_t *message = new uint8_t[sizeof(ChordHeader) + dataSize];
     
     // header
-    ChordHeader header = _chord->createChordHeader(type);
+    ChordHeader header = chord->createChordHeader(type);
     header.dataSize = htonl(dataSize);
     
     // copy header to message
@@ -747,11 +759,17 @@ void ChordNode::sendResponse (ChordMessageType type, std::shared_ptr<uint8_t> da
 // throws ChordConnectionException on error
 void ChordNode::sendRequest (ChordMessageType type, std::shared_ptr<uint8_t> data, ssize_t dataSize)
 {
+    // create strong pointer to chord
+    std::shared_ptr<Chord> chord { _chord };
+    if (!chord) {
+        RGPLOG_ERROR("Lost chord pointer!");
+    }
+    
     // data that will be send later (ChordHeader + the data)
     uint8_t *message = new uint8_t[sizeof(ChordHeader) + dataSize];
     
     // header
-    ChordHeader header = _chord->createChordHeader(type);
+    ChordHeader header = chord->createChordHeader(type);
     header.dataSize = htonl(dataSize);
     
     // copy header to message

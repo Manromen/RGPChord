@@ -46,10 +46,12 @@ namespace rgp {
     // forward declaration
     class ChordNode;
     
-    class Chord {
+    class Chord : std::enable_shared_from_this<Chord>
+    {
         
     public:
-        Chord ();
+        Chord (std::string ipAddress, uint16_t port);
+        Chord (std::string ipAddress, uint16_t port, std::string c_ipAddress, uint16_t c_port);
         ~Chord ();
         
         // key lenght (exponent m of the formular)
@@ -59,14 +61,13 @@ namespace rgp {
         ChordHeader createChordHeader (ChordMessageType);
         
         // highest possible hash id
-        int highestID () const;
+        ChordId highestID () const;
         
         // check if i'm responsible for the given key
         bool keyIsInMyRange (ChordId key) const;
         
         // perform a search for the given key
-        ChordHeaderNode searchForKey (std::shared_ptr<ChordNode> searchingNode,
-                                      ChordId key) const;
+        ChordHeaderNode searchForKey (ChordId searchingNode, ChordId key) const;
         
         // update predecessor if needed
         ChordHeaderNode updatePredecessor (ChordHeaderNode node);
@@ -115,10 +116,12 @@ namespace rgp {
         
         // method of connectThread
         void waitForIncommingConnections ();
+        // my IP-Address and my Port
+        void initOwnNode (std::string ipAddress, uint16_t port);
         // join existing DHT using given ip and port
         void joinDHT (std::string c_ipAddress, uint16_t c_port);
         // sets the given node as predecessor
-        inline void setPredecessor (std::shared_ptr<ChordNode> node);
+        inline void setPredecessor (ChordHeaderNode node);
         
         // stabilize protocol
         void stabilize ();

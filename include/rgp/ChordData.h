@@ -48,7 +48,7 @@ namespace rgp {
     private:
         
         /**
-         @brief Create binary data of an object.
+         @brief Binary data of an object.
          @details Create a binary data that represents Your object.
          The first 4 bytes (uint32_t) are reserved to represent the data size.
          The data size has to be in network byteorder.
