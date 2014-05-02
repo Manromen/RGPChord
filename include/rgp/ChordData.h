@@ -39,9 +39,10 @@
 namespace rgp {
     
     /**
-     @brief Data that can be send / received through Chord.
-     @details Your data that will be send through Chord has to inherit
-     from this data class. There are two methods to serialize the instance.
+     @brief Abstract Class: Data that can be send / received through Chord.
+     @details Data that can be send through Chord has to inherit
+     from this abstract data class. There are two methods to serialize the
+     instance.
      */
     class ChordData {
         
@@ -57,7 +58,7 @@ namespace rgp {
          thtough Chord.
          @sa updateWithSerializedData()
          */
-        virtual std::shared_ptr<uint8_t> serializedData () const;
+        virtual std::shared_ptr<uint8_t> serializedData () const = 0;
         
         /**
          @brief Update or Recreate the object using the given binary data.
@@ -67,7 +68,7 @@ namespace rgp {
          @param data The binary data to recreate the object.
          @sa serializedData()
          */
-        virtual void updateWithSerializedData(std::shared_ptr<uint8_t> data);
+        virtual void updateWithSerializedData (const std::shared_ptr<uint8_t> data) = 0;
         
         friend class ChordNode;
     };

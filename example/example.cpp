@@ -32,11 +32,98 @@
 #include <iostream>
 #include <rgp/Chord>
 #include <rgp/Log.h>
+#include "example.h"
 
 using namespace rgp;
 
+ExampleData::ExampleData(int32_t number, std::string data)
+: _dataNumber(number), _dataString(data)
+{
+}
+
+std::shared_ptr<uint8_t> ExampleData::serializedData () const
+{
+    // create reference to our string
+    const char *str = _dataString.c_str();
+    
+    // calculate data size
+    uint32_t dataSize { sizeof(uint32_t) + sizeof(_dataNumber) + sizeof(str) };
+    
+    // create data with enough space
+    std::shared_ptr<uint8_t> data { new uint8_t[dataSize], std::default_delete<uint8_t[]>() };
+    
+    // convert data size to network byteorder
+    uint32_t dSize { htonl(dataSize) };
+    
+    // create pointer to first position on data
+    uint8_t *pos = data.get();
+    
+    // copy the data into the data
+    memcpy(pos, &dSize, sizeof(dSize));
+    pos += sizeof(dSize);
+    memcpy(pos, &_dataNumber, sizeof(_dataNumber));
+    pos += sizeof(_dataNumber);
+    memcpy(pos, &str, sizeof(str));
+    
+    return data;
+}
+
+void ExampleData::updateWithSerializedData (const std::shared_ptr<uint8_t> data)
+{
+    if (data) {
+        
+        // create pointer to first position on data
+        uint8_t *pos = data.get();
+        
+        uint32_t dataSize { 0 };
+        
+        memcpy(&dataSize, pos, sizeof(dataSize));
+        pos += sizeof(dataSize);
+        
+        uint32_t dSize = ntohl(dataSize);
+        dSize -= sizeof(dataSize);
+        
+        if (dSize >= sizeof(_dataNumber)) {
+            memcpy(&_dataNumber, pos, sizeof(_dataNumber));
+            pos += sizeof(_dataNumber);
+            dSize -= sizeof(_dataNumber);
+        }
+        
+        if (dSize > 0) {
+            std::shared_ptr<char> str { new char[dataSize], std::default_delete<char[]>() };
+            memcpy(&str, pos, dSize);
+            _dataString = std::string(str.get());
+        }
+    }
+}
+
+std::string ExampleData::description() const
+{
+    std::string desc { "ExampleData: " };
+    
+    desc += _dataString;
+    desc += std::string(" ");
+    desc += std::to_string(_dataNumber);
+    
+    return desc;
+}
+
+
 int main (int argc, const char **argv)
 {
+    
+    ExampleData *data1 = new ExampleData(50, "Hallo");
+    
+    ExampleData *data2 = new ExampleData();
+    
+    Log::sharedLog()->print(std::string("data1: ") + data1->description());
+    Log::sharedLog()->print(std::string("data2: ") + data2->description());
+
+    Log::sharedLog()->print("copy data...");
+    
+    data2->updateWithSerializedData(data1->serializedData());
+    
+    Log::sharedLog()->print(std::string("data2: ") + data2->description());
     
     return EXIT_SUCCESS;
 }

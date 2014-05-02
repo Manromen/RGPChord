@@ -77,11 +77,11 @@ Chord::Chord (std::string ipAddress, uint16_t port, std::string c_ipAddress, uin
     // start stabilize protocol
     _stabilizeThread = std::thread(&Chord::stabilize, this);
     
-    // TODO: fill finger table
-    //    for (int k=1; k < kKeyLenght; k++) {
-    //        int nodeID = (int)(ownNode->getNodeID() + std::pow(2, k-1)) % highestID();
-    //
-    //    }
+// TODO: fill finger table
+//    for (int k=1; k < kKeyLenght; k++) {
+//        int nodeID = (int)(ownNode->getNodeID() + std::pow(2, k-1)) % highestID();
+//
+//    }
 }
 
 Chord::~Chord ()
