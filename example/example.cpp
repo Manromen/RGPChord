@@ -53,14 +53,14 @@ std::shared_ptr<uint8_t> ExampleData::serializedData () const
     std::shared_ptr<uint8_t> data { new uint8_t[dataSize], std::default_delete<uint8_t[]>() };
     
     // convert data size to network byteorder
-    uint32_t dSize { htonl(dataSize) };
+    dataSize = htonl(dataSize);
     
     // create pointer to first position on data
     uint8_t *pos = data.get();
     
     // copy the data into the data
-    memcpy(pos, &dSize, sizeof(dSize));
-    pos += sizeof(dSize);
+    memcpy(pos, &dataSize, sizeof(dataSize));
+    pos += sizeof(dataSize);
     memcpy(pos, &_dataNumber, sizeof(_dataNumber));
     pos += sizeof(_dataNumber);
     memcpy(pos, &str, sizeof(str));
@@ -77,21 +77,25 @@ void ExampleData::updateWithSerializedData (const std::shared_ptr<uint8_t> data)
         
         uint32_t dataSize { 0 };
         
+        // get data size from data
         memcpy(&dataSize, pos, sizeof(dataSize));
         pos += sizeof(dataSize);
         
-        uint32_t dSize = ntohl(dataSize);
-        dSize -= sizeof(dataSize);
+        // convert data size from network byteorder to host byteorder
+        dataSize = ntohl(dataSize);
+        dataSize -= sizeof(dataSize);
         
-        if (dSize >= sizeof(_dataNumber)) {
+        // copy number from data
+        if (dataSize >= sizeof(_dataNumber)) {
             memcpy(&_dataNumber, pos, sizeof(_dataNumber));
             pos += sizeof(_dataNumber);
-            dSize -= sizeof(_dataNumber);
+            dataSize -= sizeof(_dataNumber);
         }
         
-        if (dSize > 0) {
+        // copy the string from the data
+        if (dataSize > 0) {
             std::shared_ptr<char> str { new char[dataSize], std::default_delete<char[]>() };
-            memcpy(&str, pos, dSize);
+            memcpy(&str, pos, dataSize);
             _dataString = std::string(str.get());
         }
     }
