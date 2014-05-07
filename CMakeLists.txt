@@ -42,10 +42,10 @@ add_executable(example
 target_link_libraries(example rgp-chord)
 
 # link external libraries
-find_library(rgp-log librgp-log.a)
+find_library(rgp-log NAMES rgp-log)
 
 if(${rgp-log} STREQUAL "rgp-log-NOTFOUND")
-    message(FATAL_ERROR "Couldn't find the librgp-log.a library. Please check the Readme.md for required dependencies.")
+    message(FATAL_ERROR "Couldn't find the rgp-log library. Please check the Readme.md for required dependencies.")
 endif()
 message(STATUS "Found 'RGP-Log' at: ${rgp-log}")
 
