@@ -30,7 +30,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # create library
-add_library(rgp-chord STATIC
+add_library(rgp-chord SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Chord.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ChordNode.cpp)
 
@@ -57,4 +57,4 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/rgp
   DESTINATION include)
 
 install(TARGETS rgp-chord
-  ARCHIVE DESTINATION lib)
+  LIBRARY DESTINATION lib)
