@@ -52,6 +52,11 @@ message(STATUS "Found 'RGP-Log' at: ${rgp-log}")
 target_link_libraries(rgp-chord rgp-log)
 target_link_libraries(example rgp-log)
 
+# set version info
+set_target_properties(rgp-chord PROPERTIES
+					  VERSION 0.1
+					  SOVERSION 0)
+
 # installation 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/rgp
   DESTINATION include)
