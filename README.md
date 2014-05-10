@@ -8,7 +8,7 @@ Installation
 =======
 #### Dependencies ####
 Please install the following dependencies before using CMake:
-* RGP-Log: https://github.com/Manromen/RGPLog
+* RGPLog: https://github.com/Manromen/RGPLog
 
 #### CMake ####
 There is a provided CMake configure file.  
