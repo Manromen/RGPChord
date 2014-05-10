@@ -1,4 +1,4 @@
-RGP-Chord
+RGPChord
 =========
 Chord Library - Peer-to-Peer Distributed Hash Table
 
