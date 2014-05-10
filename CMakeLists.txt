@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-project (RGP-Chord)
+project (RGPChord)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O3")
@@ -30,7 +30,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # create library
-add_library(rgp-chord SHARED
+add_library(rgpchord SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Chord.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ChordNode.cpp)
 
@@ -39,21 +39,21 @@ add_executable(example
                ${CMAKE_CURRENT_SOURCE_DIR}/example/example.cpp)
 
 # link library to example executable
-target_link_libraries(example rgp-chord)
+target_link_libraries(example rgpchord)
 
 # link external libraries
-find_library(rgp-log NAMES rgp-log)
+find_library(rgplog NAMES rgplog)
 
-if(${rgp-log} STREQUAL "rgp-log-NOTFOUND")
-    message(FATAL_ERROR "Couldn't find the rgp-log library. Please check the Readme.md for required dependencies.")
+if(${rgplog} STREQUAL "rgplog-NOTFOUND")
+    message(FATAL_ERROR "Couldn't find the RGPLog library. Please check the Readme.md for required dependencies.")
 endif()
-message(STATUS "Found 'RGP-Log' at: ${rgp-log}")
+message(STATUS "Found 'RGPLog' at: ${rgplog}")
 
-target_link_libraries(rgp-chord rgp-log)
-target_link_libraries(example rgp-log)
+target_link_libraries(rgpchord rgplog)
+target_link_libraries(example rgplog)
 
 # set version info
-set_target_properties(rgp-chord PROPERTIES
+set_target_properties(rgpchord PROPERTIES
 					  VERSION 0.1
 					  SOVERSION 0)
 
@@ -61,5 +61,5 @@ set_target_properties(rgp-chord PROPERTIES
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/rgp
   DESTINATION include)
 
-install(TARGETS rgp-chord
+install(TARGETS rgpchord
   LIBRARY DESTINATION lib)
