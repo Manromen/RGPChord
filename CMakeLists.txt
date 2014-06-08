@@ -19,6 +19,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") # Intel
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "14.0")
     message(WARNING "Your compiler version may not support all used C++11 features!")
   endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC") # MS Visual Compiler
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18.0")
+    message(WARNING "Your compiler version may not support all used C++11 features!")
+  endif()
 endif()
 
 # enable c++11
