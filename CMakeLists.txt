@@ -53,8 +53,8 @@ if(${rgplog} STREQUAL "rgputils-NOTFOUND")
 endif()
 message(STATUS "Found 'RGPUtils' at: ${rgputils}")
 
-target_link_libraries(rgpchord rgplog)
-target_link_libraries(example rgplog)
+target_link_libraries(rgpchord rgputils)
+target_link_libraries(example rgputils)
 
 # set version info
 set_target_properties(rgpchord PROPERTIES
