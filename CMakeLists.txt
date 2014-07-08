@@ -46,12 +46,12 @@ add_executable(example
 target_link_libraries(example rgpchord)
 
 # link external libraries
-find_library(rgplog NAMES rgplog)
+find_library(rgputils NAMES rgputils)
 
-if(${rgplog} STREQUAL "rgplog-NOTFOUND")
-    message(FATAL_ERROR "Couldn't find the RGPLog library. Please check the Readme.md for required dependencies.")
+if(${rgplog} STREQUAL "rgputils-NOTFOUND")
+    message(FATAL_ERROR "Couldn't find the RGPUtils library. Please check the Readme.md for required dependencies.")
 endif()
-message(STATUS "Found 'RGPLog' at: ${rgplog}")
+message(STATUS "Found 'RGPUtils' at: ${rgputils}")
 
 target_link_libraries(rgpchord rgplog)
 target_link_libraries(example rgplog)
