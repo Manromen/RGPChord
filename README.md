@@ -8,7 +8,7 @@ Installation
 =======
 #### Dependencies ####
 Please install the following dependencies before using CMake:
-* RGPLog: https://github.com/Manromen/RGPLog
+* RGPUtils: https://github.com/Manromen/RGPUtils
 
 #### CMake ####
 There is a provided CMake configure file.  
@@ -20,6 +20,8 @@ cmake -i ..
 make
 sudo make install
 ```
+
+For more information please visit: http://www.cmake.org
 
 LICENSE
 =======
